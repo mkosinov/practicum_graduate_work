@@ -4,6 +4,7 @@
 .nogit
 docker-compose.override.yml
 compose.override.yml
+*.drawio.bkp
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
