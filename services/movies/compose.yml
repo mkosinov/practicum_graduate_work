@@ -1,0 +1,106 @@
+name: movies
+
+services:
+
+  movies.db:
+    container_name: movies.elastic
+    image: elasticsearch:8.6.2
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - ingest.geoip.downloader.enabled=false      
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - cluster.routing.allocation.disk.threshold_enabled=false
+      - bootstrap.memory_lock=true
+      - logger.level=INFO
+    expose:
+      - 9200
+    volumes:
+      - ./elastic_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: curl -s -f http://localhost:9200 || exit 1
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    mem_limit: 2g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    restart: always
+    networks:
+      movies_project_net:      
+
+  movies.cache:
+    container_name: movies.redis
+    image: redis:7.2.3-alpine3.19
+    expose:
+      - 6379
+    volumes:
+      - redis_data:/data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli", "-p 6379", "ping"]
+      interval: 30s
+      timeout: 1s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      movies.app:
+        condition: service_healthy
+    networks:
+      movies_project_net:
+    command: redis-server --save 60 1 --loglevel notice
+
+
+  movies.app:
+    container_name: movies.fastapi
+    build:
+      context: ./fastapi
+    image: fastapi_img
+    environment:
+      - REDIS_HOST=movies.redis
+      - ES_HOST=movies.elastic
+    expose:
+      - 8000
+    volumes:
+      - fastapi_log:/usr/src/fastapi/logs
+    healthcheck:
+      test: curl -s -f http://localhost:8000/api/openapi || exit 1
+      interval: 30s
+      timeout: 1s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      movies.db:
+        condition: service_healthy
+    restart: always
+    networks:
+      movies_project_net:
+    command: bash -c "gunicorn -w 4 -k uvicorn.workers.UvicornWorker -b :8000 main:app"
+
+  movies.proxy:
+    container_name: movies.nginx
+    image: nginx:1.25-bookworm
+    ports:
+      - 8000:80
+    volumes:
+      - nginx_log:/var/log/nginx
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      movies.app:
+        condition: service_healthy
+    restart: always
+    networks:
+      movies_project_net:
+
+volumes:
+  redis_data:
+  elastic_data:
+  fastapi_log:
+  nginx_log:
+
+networks:
+  movies_project_net:

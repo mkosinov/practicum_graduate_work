@@ -1,0 +1,43 @@
+@startuml "Обращение пользователя к Алисе с запросом на поиск"
+autonumber
+
+title Обращение пользователя к Алисе с запросом "кто автора фильма Звездные войны"
+actor User
+participant API
+participant DialogueController
+participant Assistant
+participant ReplyGenerator
+participant ServicesInteractor
+participant MoviesInterface
+participant DialogKeeper
+boundary MoviesAPI
+boundary Dialogs
+
+' Начало процесса
+
+User -> API++: Webhook:\n"Кто режиссер\nфильма звёздные\nвойны 1984 года"
+API -> Assistant++: Инициализация экземпляра\nAssistant(Alice, webhook)
+API -> DialogueController++: Инициализация класса Dialogue Controller\nпередача созданного экземпляра Assistant
+DialogueController -> Assistant: Сессия новая?
+Assistant --> DialogueController: нет
+DialogueController -> Assistant: Запрос интентов\nи заполненных форм
+Assistant --> DialogueController: интенты, формы
+DialogueController -> DialogueController: форма заполнена полностью?
+DialogueController <- DialogueController: да
+DialogueController -> ServicesInteractor ++: интент "поиск режиссера"\nзаполненная форма
+ServicesInteractor -> MoviesInterface ++: Формирование запроса
+MoviesInterface -> MoviesAPI ++: отправка запроса в сервис
+MoviesAPI -> MoviesInterface --: поисковый ответ
+MoviesInterface -> ServicesInteractor --: Список ответов
+ServicesInteractor -> DialogueController --: Список ответов
+DialogueController -> ReplyGenerator ++: Подстановка результата_1\nв шаблон ответа
+ReplyGenerator -> DialogueController --: Фраза
+DialogueController -> Assistant: Подготовь ANSWER_TO_USER с фразой
+Assistant -> DialogueController --: ANSWER_TO_USER
+DialogueController -> API --: ANSWER_TO_USER
+API -> User: ANSWER_TO_USER
+API -> DialogKeeper ++: Сохранить диалог
+DialogKeeper -> Dialogs ++: POST Dialog
+Dialogs --> DialogKeeper --: Created
+DialogKeeper --> API --: Created
+@enduml

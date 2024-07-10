@@ -1,0 +1,33 @@
+@startuml "Первое обращение пользователя к навыку"
+autonumber
+
+title Первое обращение пользователя к навыку
+actor User
+participant API
+participant DialogueController
+participant Assistant
+participant ReplyGenerator
+
+' Начало процесса
+
+User -> API++: Webhook
+API -> Assistant++: Инициализация экземпляра\nAssistant(Alice, webhook)
+API -> DialogueController++: Инициализация класса Dialogue Controller\nпередача созданного экземпляра Assistant
+DialogueController -> DialogueController: Анализ интентов\n(к примеру intent="приветствие")
+DialogueController -> Assistant: Сессия новая?
+Assistant --> DialogueController: да
+DialogueController -> Assistant: Пользовался пользователь\nранее навыком?
+opt
+Assistant --> DialogueController: <font color=green> да
+DialogueController -> ReplyGenerator ++: Запрос фразы для приветствия\n<font color=green>существующего</font> пользователя
+else
+Assistant --> DialogueController: <font color=red> нет
+DialogueController -> ReplyGenerator ++: Запрос фразы для приветствия\n<font color=red>нового</font> пользователя
+end
+ReplyGenerator -> DialogueController: Фраза
+deactivate ReplyGenerator
+DialogueController -> Assistant: Подготовь Response с учетом\nповерхности и фразы
+Assistant -> DialogueController --: Response
+DialogueController -> API --: Reponse
+API -> User --: Голосовой помощник\nзачитывает ответ
+@enduml

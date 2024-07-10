@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "Postgres_to_ES"
+version = "0.1.0"
+description = "Перенос базы из Postgres в Elasticsearch"
+authors = ["Борис Гельруд <agu-66@mail.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pre-commit = "^3.1.1"
+python-dotenv = "^1.0.0"
+flake8 = "^6.1.0"
+psycopg2-binary = "^2.9.9"
+elasticsearch = "^8.11.0"
+pydantic = "^2.5.2"
+get-docker-secret = "^2.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.3.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

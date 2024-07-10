@@ -1,0 +1,20 @@
+# Environments
+.venv
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# README file
+README.md
+
+# env.example file
+env.example
+
+#states_storage
+states.json
+
+# log file
+*.log
+
+# Tests
+tests/
