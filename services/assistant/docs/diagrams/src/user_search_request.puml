@@ -4,8 +4,8 @@ autonumber
 title Обращение пользователя к Алисе с запросом "кто автора фильма Звездные войны"
 actor User
 participant API
-participant DialogueController
 participant Assistant
+participant DialogueController
 participant ReplyGenerator
 participant ServicesInteractor
 participant MoviesInterface
@@ -16,7 +16,7 @@ boundary Dialogs
 ' Начало процесса
 
 User -> API++: Webhook:\n"Кто режиссер\nфильма звёздные\nвойны 1984 года"
-API -> Assistant++: Инициализация экземпляра\nAssistant(Alice, webhook)
+API -> Assistant++: Инициализация экземпляра\nAssistant("Alice", webhook)
 API -> DialogueController++: Инициализация класса Dialogue Controller\nпередача созданного экземпляра Assistant
 DialogueController -> Assistant: Сессия новая?
 Assistant --> DialogueController: нет

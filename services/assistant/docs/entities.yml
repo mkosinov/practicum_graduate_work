@@ -1,0 +1,121 @@
+entity MovieType:
+    lemma: true
+    values:
+        film:
+            кино
+            фильм
+            film
+            movie
+        show:
+            шоу
+            show
+        series:
+            сериал
+            series
+entity Action:
+    lemma: true
+    values:
+        play:
+            играть
+            сняться
+            play
+        write:
+            написать
+            создать
+            придумать
+        produce:
+            продюссировать
+            выпустить
+            сделать
+entity Role:
+    lemma: true
+    values:
+        actor:
+            актёр
+        director:
+            режиссёр
+            директор
+        writer:
+            сценарист
+            автор
+        producer:
+            продюсер
+        composer:
+            композитор
+entity QuestionWords:
+    values:
+        person:
+            кто
+            кем
+            кого
+            кому
+        film:
+            как
+            какой
+            когда
+            что
+entity Genre:
+    values:
+        Action:
+            боевик
+        Adventure:
+            приключения
+            приключенческий фильм               
+        Art_house_film:
+            арт-хаус            
+        Animation:
+            анимационный фильм
+        Biography:
+            биография
+        Cartoon:
+            мультфильм                       
+        Comedy:
+            комедия
+        Crime:
+            криминал                
+        Documentary:
+            документальный            
+        Drama:
+            драма            
+        Disaster_film:
+            катастрофа
+        Family:
+            семейный
+        Fantasy:
+            фэнтези
+        Game-show:
+            игровое шоу
+        History:
+            исторический            
+        Horror:
+            ужасы
+        Mystery:
+            мистика
+        Music:
+            музыка
+        Musical:
+            мюзикл
+        News:
+            новости
+        Romance:
+            мелодрама
+        Reality-TV:
+            реалити шоу
+        Sci-Fi:
+            научная фантастика
+        Short:
+            короткометражный фильм
+        Sport:
+            спорт            
+        Talk-show:
+            телевизионный шоу               
+        Thriller:
+            триллер
+        TV_series:
+            короткометражный фильм
+        TV_show:
+            ТВ шоу
+        Western:
+            вестерн            
+        War:
+            военный

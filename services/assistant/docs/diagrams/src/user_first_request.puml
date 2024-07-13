@@ -7,13 +7,16 @@ participant API
 participant DialogueController
 participant Assistant
 participant ReplyGenerator
+participant DialogKeeper
+boundary Dialogs
 
 ' Начало процесса
 
 User -> API++: Webhook
-API -> Assistant++: Инициализация экземпляра\nAssistant(Alice, webhook)
-API -> DialogueController++: Инициализация класса Dialogue Controller\nпередача созданного экземпляра Assistant
-DialogueController -> DialogueController: Анализ интентов\n(к примеру intent="приветствие")
+API -> Assistant++: Инициализация экземпляра\nAssistant("Alice", webhook)
+API -> DialogueController++: передача созданного экземпляра Assistant
+DialogueController -> Assistant: Запрос интентов
+Assistant --> DialogueController: "приветствие"
 DialogueController -> Assistant: Сессия новая?
 Assistant --> DialogueController: да
 DialogueController -> Assistant: Пользовался пользователь\nранее навыком?
@@ -24,10 +27,16 @@ else
 Assistant --> DialogueController: <font color=red> нет
 DialogueController -> ReplyGenerator ++: Запрос фразы для приветствия\n<font color=red>нового</font> пользователя
 end
-ReplyGenerator -> DialogueController: Фраза
+ReplyGenerator -> DialogueController --: Фраза
 deactivate ReplyGenerator
-DialogueController -> Assistant: Подготовь Response с учетом\nповерхности и фразы
-Assistant -> DialogueController --: Response
-DialogueController -> API --: Reponse
-API -> User --: Голосовой помощник\nзачитывает ответ
+DialogueController -> Assistant: Подготовь ответ с учетом\nповерхности и фразы
+Assistant -> DialogueController --: ANSWER_TO_USER
+DialogueController -> API --: ANSWER_TO_USER
+API -> User: ANSWER_TO_USER
+
+API -> DialogKeeper ++: Сохранить диалог
+DialogKeeper -> Dialogs ++: POST Dialog
+Dialogs --> DialogKeeper --: Created
+DialogKeeper --> API --: Created
+deactivate API
 @enduml
