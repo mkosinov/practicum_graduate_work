@@ -4,6 +4,7 @@ from uuid import UUID
 from core.config import settings
 from core.enum import (
     APICommonDescription,
+    APIPersonAdvancedSearchDescription,
     APIPersonByUUIDDescription,
     APIPersonFilmsByUUID,
     APIPersonSearchDescription,
@@ -110,11 +111,11 @@ async def person_films(
 
 
 @router.post(
-    "/advanced_search_persons",
+    "/advanced_search",
     response_model=list[Person],
-    summary=APIPersonSearchDescription.summary,
-    description=APIPersonSearchDescription.description,
-    response_description=APIPersonSearchDescription.response_description,
+    summary=APIPersonAdvancedSearchDescription.summary,
+    description=APIPersonAdvancedSearchDescription.description,
+    response_description=APIPersonAdvancedSearchDescription.response_description,
 )
 async def advanced_search_persons(
     request: Request,
@@ -130,11 +131,21 @@ async def advanced_search_persons(
         None,
         examples=[
             {
-                "persons": {
+                "person": {
+                    "full_name": "Lucas",
+                },
+                "films": {
+                    "title": "war",
+                    "roles": "director",
+                },
+            },
+            {
+                "person": {
                     "full_name": "Lucas",
                 },
                 "films": {
                     "title": "star war",
+                    "description": "jedi",
                     "imdb_rating": 0.0,
                     "creation_date": "",
                     "roles": "director",

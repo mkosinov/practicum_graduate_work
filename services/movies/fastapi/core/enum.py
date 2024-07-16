@@ -94,6 +94,14 @@ class APIPersonSearchDescription(str, Enum):
     response_description = "Список всех персон"
 
 
+class APIPersonAdvancedSearchDescription(str, Enum):
+    """Модель описания расширенного поиска персон по всем полям индекса."""
+
+    summary = "Расширенный поиск по персонам"
+    description = "Расширенный поиск персон"
+    response_description = "Список персон, соответствующих запросу"
+
+
 class APIPersonFilmsByUUID(str, Enum):
     """Модель описания запроса поиска фильмов с участием персоны по UUID."""
 

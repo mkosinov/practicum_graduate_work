@@ -41,6 +41,7 @@ class PersonService(CommonService):
             "films": [
                 {
                     "title": str,
+                    "description": str,
                     "imdb_rating": float,
                     "creation_date": str,
                     "roles": str
@@ -49,7 +50,9 @@ class PersonService(CommonService):
         }
         """
         matches = search_query.get("person", {})
-        nested_matches = search_query.get("films", {})
+        nested_matches = {}
+        for key, value in search_query.get("films", []).items():
+            nested_matches["films." + key] = value
 
         es_query = self._get_es_query(
             page_number=page_number,
@@ -67,8 +70,8 @@ class PersonService(CommonService):
 def get_person_service(
     cache=Depends(get_cache_service),
     elastic=Depends(get_storage_service),
-) -> CommonService:
-    return CommonService(
+) -> PersonService:
+    return PersonService(
         cache=cache,
         elastic=elastic,
         model=Person,

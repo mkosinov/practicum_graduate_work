@@ -84,7 +84,7 @@ class CommonService:
 
     @staticmethod
     def _get_es_query(
-        sort: str,
+        sort: str = "",
         page_number: int = 1,
         page_size: int = settings.STANDART_PAGE_SIZE,
         matches: dict = None,
@@ -92,8 +92,6 @@ class CommonService:
         bool_operator: str = "must",
     ):
         """Метод получения тела запроса в Elasticsearch."""
-        if sort is None:
-            sort = ""
         bool_base = ""
         bool_nested = ""
         from_ = (page_number - 1) * page_size

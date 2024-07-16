@@ -144,7 +144,7 @@ async def film_list(
 
 
 @router.post(
-    "/advanced_search_films",
+    "/advanced_search",
     response_model=list[Film],
     summary=APIFilmAdvancedSearchDescription.summary,
     description=APIFilmAdvancedSearchDescription.description,
