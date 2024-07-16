@@ -1,8 +1,7 @@
 """Общие сервисы для эндроинтов API."""
-from uuid import UUID
 
-from fastapi import Request
-from pydantic import BaseModel
+import json  # noqa
+from uuid import UUID
 
 from core.cache import AbstractCacheService
 from core.config import settings
@@ -10,12 +9,14 @@ from core.es_queries import (
     BOOL,
     MATCH_ALL,
     MATCH_QUERY,
-    NESTED_QUERY,
+    NESTED_QUERY_MUST,
     QUERY_BASE,
     SORT,
 )
 from core.models import SortOrder
 from core.storage import ElasticService
+from fastapi import Request
+from pydantic import BaseModel
 
 
 class CommonService:
@@ -88,7 +89,7 @@ class CommonService:
         page_size: int = settings.STANDART_PAGE_SIZE,
         matches: dict = None,
         nested_matches: dict = None,
-        bool_operator: str = "should",
+        bool_operator: str = "must",
     ):
         """Метод получения тела запроса в Elasticsearch."""
         if sort is None:
@@ -104,7 +105,7 @@ class CommonService:
         if nested_matches:
             bool_nested = ",".join(
                 (
-                    NESTED_QUERY
+                    NESTED_QUERY_MUST
                     % {
                         "key_path": key.split(".")[0],
                         "key": key,
@@ -114,15 +115,18 @@ class CommonService:
                 for key, value in nested_matches.items()
             )
         if not bool_base and not bool_nested:
-            bool = MATCH_ALL
+            bool_stmt = MATCH_ALL
         else:
-            bool = ",".join((bool_base, bool_nested)).strip(",")
-            bool = BOOL % {"bool_operator": bool_operator, "bool": bool}
+            bool_base_nested = ",".join((bool_base, bool_nested)).strip(",")
+            bool_stmt = BOOL % {
+                "bool_operator": bool_operator,
+                "bool": bool_base_nested,
+            }
         es_query = QUERY_BASE % {
             "from_": from_,
             "page_size": page_size,
             "sort": sort,
-            "bool": bool,
+            "bool": bool_stmt,
         }
         return es_query
 

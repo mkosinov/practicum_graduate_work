@@ -35,6 +35,14 @@ class APIFilmSearchDescription(str, Enum):
     response_description = "Список всех кинопроизведений"
 
 
+class APIFilmAdvancedSearchDescription(str, Enum):
+    """Модель описания расширенного поиска фильма по всем полям индекса."""
+
+    summary = "Расширенный поиск по кинопроизведениям"
+    description = "Расширенный поиск кинопроизведений"
+    response_description = "Список кинопроизведений, соответствующих запросу"
+
+
 class APIFilmMainDescription(str, Enum):
     """Модель описания запроса поиска фильма для главной страницы."""
 

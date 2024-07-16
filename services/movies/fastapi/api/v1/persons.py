@@ -1,8 +1,6 @@
 from http import HTTPStatus
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
-
 from core.config import settings
 from core.enum import (
     APICommonDescription,
@@ -12,8 +10,17 @@ from core.enum import (
     ErrorMessage,
 )
 from core.service import CommonService
-from models.person import InnerPersonFilmsByUUID, PersonFilms
-from services.person import get_person_service
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    HTTPException,
+    Path,
+    Query,
+    Request,
+)
+from models.person import InnerPersonFilmsByUUID, Person, PersonFilms
+from services.person import PersonService, get_person_service
 
 router = APIRouter()
 
@@ -100,3 +107,61 @@ async def person_films(
             detail=ErrorMessage.films_not_found,
         )
     return person.films
+
+
+@router.post(
+    "/advanced_search_persons",
+    response_model=list[Person],
+    summary=APIPersonSearchDescription.summary,
+    description=APIPersonSearchDescription.description,
+    response_description=APIPersonSearchDescription.response_description,
+)
+async def advanced_search_persons(
+    request: Request,
+    page_number: int = Query(
+        1, description=APICommonDescription.page_number, ge=1
+    ),
+    page_size: int = Query(
+        1,
+        description=APICommonDescription.page_size,
+        ge=1,
+    ),
+    search_query: dict = Body(
+        None,
+        examples=[
+            {
+                "persons": {
+                    "full_name": "Lucas",
+                },
+                "films": {
+                    "title": "star war",
+                    "imdb_rating": 0.0,
+                    "creation_date": "",
+                    "roles": "director",
+                },
+            },
+        ],
+        description="field:value dict",
+    ),
+    service: PersonService = Depends(get_person_service),
+) -> list[Person]:
+    """
+    Поиск кинопроизведений с использованием Elasticsearch (или кеша Redis).
+
+    :param search_query: Словарь с полями и значениями, которые нужно использовать для поиска.
+    :param page_number: Номер страницы (начиная с 1).
+    :param page_size: Количество элементов на странице.
+    """
+    persons = await service.advanced_search(
+        page_number=page_number,
+        page_size=page_size,
+        search_query=search_query,
+        bool_operator="must",
+        request=request,
+    )
+    if not persons:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=ErrorMessage.films_not_found,
+        )
+    return persons

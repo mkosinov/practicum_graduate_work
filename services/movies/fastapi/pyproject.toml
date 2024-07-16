@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "fast-api-1"
+name = "moviesAPI"
 version = "0.1.0"
 description = "First FastAPI sprint"
 authors = ["Maksim Kosinov <mkosinov@mail.ru>", "Борис Гельруд <agu-66@mail.ru>"]

@@ -4,15 +4,24 @@ from uuid import UUID
 from core.config import settings
 from core.enum import (
     APICommonDescription,
+    APIFilmAdvancedSearchDescription,
     APIFilmByUUIDDescription,
     APIFilmMainDescription,
     APIFilmSearchDescription,
     ErrorMessage,
 )
 from core.service import CommonService
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    HTTPException,
+    Path,
+    Query,
+    Request,
+)
 from models.film import Film, FilmShort
-from services.film import get_film_service
+from services.film import FilmService, get_film_service
 
 router = APIRouter()
 
@@ -131,4 +140,71 @@ async def film_list(
             detail=ErrorMessage.films_not_found,
         )
 
+    return films
+
+
+@router.post(
+    "/advanced_search_films",
+    response_model=list[Film],
+    summary=APIFilmAdvancedSearchDescription.summary,
+    description=APIFilmAdvancedSearchDescription.description,
+    response_description=APIFilmAdvancedSearchDescription.response_description,
+)
+async def advanced_search_films(
+    request: Request,
+    page_number: int = Query(
+        1, description=APICommonDescription.page_number, ge=1
+    ),
+    page_size: int = Query(
+        1,
+        description=APICommonDescription.page_size,
+        ge=1,
+    ),
+    sort: str = Query("-imdb_rating", description=APICommonDescription.sort),
+    search_query: dict = Body(
+        None,
+        examples=[
+            {
+                "movie": {
+                    "title": "war",
+                    "description": "jedi",
+                },
+                "persons": [{"full_name": "Ewan", "role": "actor"}],
+            },
+            {
+                "movie": {
+                    "title": "string",
+                    "description": "string",
+                    "imdb_rating": 0.0,
+                    "creation_date": "string",
+                    "subscribers_only": True,
+                },
+                "genres": [{"name": "string"}],
+                "persons": [{"full_name": "string", "role": "string"}],
+            },
+        ],
+        description="field:value dict",
+    ),
+    service: FilmService = Depends(get_film_service),
+) -> list[Film]:
+    """
+    Поиск кинопроизведений с использованием Elasticsearch (или кеша Redis).
+
+    :param search_query: Словарь с полями и значениями, которые нужно использовать для поиска.
+    :param page_number: Номер страницы (начиная с 1).
+    :param page_size: Количество элементов на странице.
+    """
+    films = await service.advanced_search(
+        page_number=page_number,
+        page_size=page_size,
+        sort=sort,
+        search_query=search_query,
+        bool_operator="must",
+        request=request,
+    )
+    if not films:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=ErrorMessage.films_not_found,
+        )
     return films

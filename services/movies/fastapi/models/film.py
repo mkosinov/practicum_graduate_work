@@ -15,6 +15,7 @@ class Film(FilmShort):
 
     genre: list[GenreShort] | None = []
     description: str | None = ""
+    creation_date: str | None = ""
     actors: list[PersonShort] | None = []
     writers: list[PersonShort] | None = []
     directors: list[PersonShort] | None = []

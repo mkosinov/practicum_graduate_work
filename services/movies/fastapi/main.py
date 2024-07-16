@@ -1,17 +1,16 @@
 from contextlib import asynccontextmanager
 
 import sentry_sdk
+from api.v1 import films, genres, persons
+from core.config import settings
+from core.logger import logger
+from db import elastic, redis
 from elasticsearch import AsyncElasticsearch
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 from redis.asyncio import Redis
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
-
-from api.v1 import films, genres, persons
-from core.config import settings
-from core.logger import logger
-from db import elastic, redis
 
 
 @asynccontextmanager
@@ -28,6 +27,7 @@ async def lifespan(app: FastAPI):
     await redis.redis.close()
     await elastic.es.close()
     logger.info("Приложение остановлено")
+
 
 sentry_sdk.init(integrations=[StarletteIntegration(), FastApiIntegration()])
 
@@ -46,3 +46,10 @@ app.include_router(
 )
 app.include_router(persons.router, prefix="/api/v1/persons", tags=["Персоны"])
 app.include_router(genres.router, prefix="/api/v1/genres", tags=["Жанры"])
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "main:app", host="0.0.0.0", port=8000, log_level="debug", reload=True
+    )

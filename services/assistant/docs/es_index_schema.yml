@@ -1,0 +1,43 @@
+movies:
+  uuid: keyword
+  title:
+    type: text
+    raw: keyword
+  description: text
+  imdb_rating: float  
+  creation_date: keyword
+  subscribers_only: boolean
+  genre:
+    type: nested
+    uuid: keyword
+    name: text  
+  actors:
+    type: nested
+    uuid: keyword
+    full_name: text
+  writers:
+    type: nested
+    uuid: keyword
+    full_name: text
+  directors:
+    type: nested
+    uuid: keyword
+    full_name: text
+
+genres:
+  uuid: keyword
+  name: keyword
+  description: text
+
+persons:
+  uuid: keyword
+  full_name:
+    type: text
+    raw: keyword
+  films:
+    type: nested
+    uuid: keyword
+    title: text    
+    imdb_rating: float
+    creation_date: keyword
+    roles: text

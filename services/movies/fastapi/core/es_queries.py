@@ -1,6 +1,20 @@
 # шаблон для поиска по вложенным документам (nested type в elasticsearch)
 # значения передаются nested_path: str, nested_match: dict''
-NESTED_QUERY = """
+NESTED_QUERY_MUST = """
+            {
+                "nested": {
+                    "path": "%(key_path)s",
+                    "query": {
+                        "bool": {
+                            "must": [
+                                {"match": {"%(key)s": "%(value)s"}}
+                            ]
+                        }
+                    }
+                }
+            }"""
+
+NESTED_QUERY_FILTER = """
             {
                 "nested": {
                     "path": "%(key_path)s",
@@ -32,6 +46,16 @@ SORT = """{"%(key)s": {"order": "%(value)s"}}"""
 # значения передаются параметрами from_: int, size: int, sort: str, bool: str
 # sort = "SORT, SORT..."
 # bool_ = "BOOL, BOOL..."
+QUERY_BASE_NO_SORT = """{
+    "from": %(from_)d,
+    "size": %(page_size)d,
+    "query": {
+        "bool": {
+            %(bool)s
+        }
+    }
+}"""
+
 QUERY_BASE = """{
     "from": %(from_)d,
     "size": %(page_size)d,
