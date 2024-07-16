@@ -1,4 +1,5 @@
 import json
+from datetime import date
 from enum import Enum
 from uuid import UUID
 
@@ -38,7 +39,9 @@ class Genre(GenreShort):
 
 class FilmToPersonIndex(Base):
     title: str | None
-    imdb_rating: float | None = 0
+    description: str | None
+    creation_date: date | None
+    imdb_rating: float | None = 0.0
     roles: str
 
 
@@ -54,6 +57,8 @@ class Person(PersonShort):
         return FilmToPersonIndex(
             uuid=UUID(film_data["uuid"]),
             title=film_data["title"],
+            description=film_data["description"],
+            creation_date=film_data["creation_date"],
             imdb_rating=film_data["imdb_rating"],
             roles=film_data["roles"],
         )
@@ -87,6 +92,7 @@ class Filmwork(Base):
     genre: list[GenreShort] | None = []
     title: str | None
     description: str | None
+    creation_date: date | None
     subscribers_only: bool | None = False
     actors: list[PersonShort] | None = []
     writers: list[PersonShort] | None = []
@@ -130,6 +136,7 @@ class Filmwork(Base):
             genres_data,
             title,
             description,
+            creation_date,
             subscribers_only,
             actors_data,
             writers_data,
@@ -142,6 +149,7 @@ class Filmwork(Base):
             genre=cls._deserialize_genres_dict(genres_data),
             title=title,
             description=description,
+            creation_date=creation_date,
             subscribers_only=subscribers_only,
             actors=cls._deserialize_person_list(json.loads(actors_data)),
             writers=cls._deserialize_person_list(json.loads(writers_data)),

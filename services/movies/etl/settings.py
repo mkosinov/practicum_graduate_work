@@ -33,6 +33,7 @@ fw.rating AS imdb_rating,
 json_object_agg(DISTINCT g.id, g.name) AS genres,
 fw.title,
 fw.description,
+fw.creation_date,
 fw.subscribers_only,
 concat('[', string_agg(DISTINCT CASE WHEN pfw.role = 'actor' THEN
 json_build_object('uuid', p.id, 'full_name', p.full_name) #>> '{}' END, ','),
@@ -64,7 +65,8 @@ SQL_REQUEST_PERSONS = """
 SELECT p.id AS uuid, p.full_name AS full_name,
 GREATEST(MAX(fw.modified), MAX(p.modified))::TEXT as modified,
 COALESCE(json_agg(json_build_object('uuid', pfw.film_work_id, 'title',
-fw.title, 'imdb_rating', fw.rating, 'roles', replace(array_to_string(pfw.roles,
+fw.title, 'imdb_rating', fw.rating, 'description', fw.description, 
+'creation_date', fw.creation_date, 'roles', replace(array_to_string(pfw.roles,
 ','), ',', ', ')))::TEXT, '[]'::TEXT) AS films
 FROM content.person as p
 JOIN (SELECT person_id, film_work_id, array_remove(COALESCE(array_agg(DISTINCT
@@ -140,6 +142,7 @@ INDEX_MOVIES_MAPPINGS = {
             "fields": {"raw": {"type": "keyword"}},
         },
         "description": {"type": "text", "analyzer": "ru_en"},
+        "creation_date": {"type": "date", "format": "yyyy"},
         "subscribers_only": {"type": "boolean"},
         "actors": {
             "type": "nested",
@@ -184,6 +187,8 @@ INDEX_PERSONS_MAPPINGS = {
                 "uuid": {"type": "keyword"},
                 "imdb_rating": {"type": "float"},
                 "title": {"type": "text", "analyzer": "ru_en"},
+                "description": {"type": "text", "analyzer": "ru_en"},
+                "creation_date": {"type": "date", "format": "yyyy"},
                 "roles": {"type": "text", "analyzer": "ru_en"},
             },
         },
