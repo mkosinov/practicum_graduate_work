@@ -53,9 +53,9 @@ class CommonService:
         request: Request,
         page_number: int = 1,
         page_size: int = settings.STANDART_PAGE_SIZE,
-        sort: str = None,
-        matches: dict = None,
-        nested_matches: dict = None,
+        sort: str = "",
+        matches: dict | None = None,
+        nested_matches: dict | None = None,
         bool_operator: str = "should",
     ) -> list[BaseModel | None]:
         """Метод получения списка из индекса по заданным параметрам."""
@@ -87,8 +87,8 @@ class CommonService:
         sort: str = "",
         page_number: int = 1,
         page_size: int = settings.STANDART_PAGE_SIZE,
-        matches: dict = None,
-        nested_matches: dict = None,
+        matches: dict | None = None,
+        nested_matches: dict | None = None,
         bool_operator: str = "must",
     ):
         """Метод получения тела запроса в Elasticsearch."""
@@ -132,6 +132,8 @@ class CommonService:
     def _get_sort(sort: str):
         """Метод получения параметра sort для запроса в Elasticsearch."""
         direction = SortOrder.ascending
+        if sort.startswith("+"):
+            sort = sort[1:]
         if sort.startswith("-"):
             sort = sort[1:]
             direction = SortOrder.descending

@@ -1,3 +1,5 @@
+from datetime import date
+
 from core.models import Base
 from models.genre import GenreShort
 from models.person import PersonShort
@@ -7,7 +9,7 @@ class FilmShort(Base):
     """Короткая модель ответа API по кинопроизведениям."""
 
     title: str | None = ""
-    imdb_rating: float | None = 0
+    imdb_rating: float | None = 0.0
 
 
 class Film(FilmShort):
@@ -15,8 +17,9 @@ class Film(FilmShort):
 
     genre: list[GenreShort] | None = []
     description: str | None = ""
-    creation_date: str | None = ""
+    creation_date: date | None
     actors: list[PersonShort] | None = []
     writers: list[PersonShort] | None = []
     directors: list[PersonShort] | None = []
+    subscribers_only: bool | None = False
     subscribers_only: bool | None = False

@@ -51,7 +51,7 @@ class PersonService(CommonService):
         """
         matches = search_query.get("person", {})
         nested_matches = {}
-        for key, value in search_query.get("films", []).items():
+        for key, value in search_query.get("films", {}).items():
             nested_matches["films." + key] = value
 
         es_query = self._get_es_query(
@@ -61,9 +61,14 @@ class PersonService(CommonService):
             nested_matches=nested_matches,
             bool_operator=bool_operator,
         )
-        return await self.elastic.search(
-            index=self.index, query=es_query, request=request
+        list_instances = await self.elastic.get_list_by_search(
+            index=self.index, model_class=self.model, query=es_query
         )
+        if list_instances and request:
+            await self.cache.put_instances_to_cache(
+                request=request, instances=list_instances
+            )
+        return list_instances
 
 
 @lru_cache()
