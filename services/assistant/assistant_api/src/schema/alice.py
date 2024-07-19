@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class CardType(StrEnum):
@@ -57,6 +57,7 @@ class Session(BaseModel):
     user: Optional[User] = None
     application: Optional[Application] = None
     new: bool = False
+    end_session: bool = False
 
 
 class Token(BaseModel):
@@ -123,6 +124,7 @@ class Card(BaseModel):
 
 
 class Response(BaseModel):
+    model_config = ConfigDict(extra="ignore")
     text: str
     tts: Optional[str] = None
     card: Optional[Card] = None

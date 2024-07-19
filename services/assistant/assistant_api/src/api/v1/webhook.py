@@ -1,17 +1,26 @@
 from pprint import pprint
 
-from core.logger import get_logger
-from fastapi import APIRouter
-from schema.alice import AliceRequest, AliceResponse, Response
+from assistant.alice import Alice, get_alice
+from core.logger import Logger, get_logger
+from fastapi import APIRouter, Depends
+from schema.alice import AliceRequest, AliceResponse
+from service.dialog_controller import DialogController, get_dialog_controller
 
 router = APIRouter(prefix="/webhook")
 
 
 @router.post(path="/alice", response_model=AliceResponse)
-def webhook_alice(webhook: AliceRequest) -> AliceResponse:
-    get_logger().debug(webhook)
-    response = Response(text="Hello, World!")
-    return AliceResponse(response=response, version="1.0")
+async def webhook_alice(
+    alice_request: AliceRequest,
+    assistant: Alice = Depends(get_alice),
+    dialogue_controller: DialogController = Depends(get_dialog_controller),
+    logger: Logger = Depends(get_logger),
+) -> AliceResponse:
+    logger.debug(alice_request)
+    response = await dialogue_controller.process_assistant_request(
+        request=alice_request, assistant=assistant
+    )
+    return response
 
 
 primer = {

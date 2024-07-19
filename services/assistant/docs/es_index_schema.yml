@@ -38,7 +38,7 @@ persons:
     type: nested
     uuid: keyword
     title: text
-    description: text #TODO
+    description: text
     imdb_rating: float
-    creation_date: keyword #TODO
+    creation_date: keyword
     roles: text
