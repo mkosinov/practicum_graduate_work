@@ -1,0 +1,21 @@
+root:
+    .* $role_type $film_type $film_title
+    .* $role_type (в)? .? ($film_type)? $film_title (в)? ($film_creation_date)? .+
+slots:
+    role:
+        type: Role
+        source: $role_type
+    title:
+        source: $film_title
+    creation_date:
+        type: YANDEX.DATETIME
+        source: $film_creation_date
+
+$role_type:
+    $Role
+$film_type:
+    $FilmType
+$film_title:
+    .+
+$film_creation_date:
+    $YANDEX.DATETIME

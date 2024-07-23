@@ -1,8 +1,11 @@
 from enum import StrEnum
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
+##################
+# Alice Enums #
+##################
 
 class CardType(StrEnum):
     BigImage = "BigImage"
@@ -33,7 +36,6 @@ class EntityType(StrEnum):
 # Alice Request #
 ##################
 
-
 class State(BaseModel):
     session: Optional[dict] = None
     user: Optional[dict] = None
@@ -57,7 +59,6 @@ class Session(BaseModel):
     user: Optional[User] = None
     application: Optional[Application] = None
     new: bool = False
-    end_session: bool = False
 
 
 class Token(BaseModel):
@@ -123,7 +124,7 @@ class Card(BaseModel):
     type: CardType
 
 
-class Response(BaseModel):
+class InnerResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
     text: str
     tts: Optional[str] = None
@@ -135,13 +136,18 @@ class Response(BaseModel):
         None  # Обязательный параметр только для сценария утреннего шоу.
     )
 
+    @field_validator('text')
+    def validate_text_length(cls, text):
+        if len(text) > 300:
+            return text[0:300]
+        return text
 
 class Analytics(BaseModel):
     events: list[dict] = []
 
 
 class AliceResponse(BaseModel):
-    response: Response
+    response: InnerResponse
     session_state: Optional[dict] = None
     user_state_update: Optional[dict] = None
     application_state: Optional[dict] = None

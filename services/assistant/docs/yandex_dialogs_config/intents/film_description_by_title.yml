@@ -1,0 +1,21 @@
+root:
+    расскажи про ($film_type)? $film_title [($film_creation_date)? ($genre_word)? ($film_genre)?]
+slots:
+    title:
+        source: $film_title
+    creation_date:
+        source: 
+    name:
+        source: $film_genre
+        type: Genre
+$film_type:
+    $FilmType        
+$film_title:
+    .+
+$film_creation_date:
+    $YANDEX.DATETIME
+$genre_word:
+    %lemma
+    жанр    
+$film_genre:
+    $Genre

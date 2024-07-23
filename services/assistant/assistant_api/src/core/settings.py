@@ -3,12 +3,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import ClassVar, Tuple, Type
 
-from pydantic_settings import (
-    BaseSettings,
-    PydanticBaseSettingsSource,
-    SettingsConfigDict,
-    TomlConfigSettingsSource,
-)
+from pydantic_settings import (BaseSettings, PydanticBaseSettingsSource,
+                               SettingsConfigDict, TomlConfigSettingsSource)
 
 
 class Settings(BaseSettings):
@@ -23,6 +19,13 @@ class Settings(BaseSettings):
     debug: bool = False
     logs_dir: Path = workdir.joinpath("logs")
     logging_level: int = logging.INFO
+
+    movies_api_host: str = "localhost"
+    movies_api_port: str = "8001"
+
+    @property
+    def movies_api_url(self) -> str:
+        return f"http://{self.movies_api_host}:{self.movies_api_port}/api/v1"
 
     @classmethod
     def settings_customise_sources(

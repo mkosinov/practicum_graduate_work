@@ -22,4 +22,3 @@ class Film(FilmShort):
     writers: list[PersonShort] | None = []
     directors: list[PersonShort] | None = []
     subscribers_only: bool | None = False
-    subscribers_only: bool | None = False

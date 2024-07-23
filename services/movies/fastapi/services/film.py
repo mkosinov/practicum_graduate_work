@@ -1,13 +1,15 @@
 from functools import lru_cache
+from pprint import pprint
 
 from core.cache import AbstractCacheService, get_cache_service
 from core.config import settings
 from core.enum import IndexName
 from core.service import CommonService
 from core.storage import ElasticService, get_storage_service
-from fastapi import Depends, Request
 from models.film import Film
 from pydantic import BaseModel
+
+from fastapi import Depends, Request
 
 
 class FilmService(CommonService):
@@ -48,6 +50,12 @@ class FilmService(CommonService):
             "persons": [{"full_name": str, "role": str}],
         }
         """
+        print("\n")
+        pprint(search_query)
+        if list_instances := await self.cache.get_instances_from_cache(
+            request=request, model=self.model
+        ):
+            return list_instances
         if sort:
             sort = self._get_sort(sort=sort)
         matches = search_query.get("movie", {})

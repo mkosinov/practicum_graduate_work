@@ -1,3 +1,5 @@
+# Справочно - схема индекса в Elasticsearch
+
 movies:
   uuid: keyword
   title:

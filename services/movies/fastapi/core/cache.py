@@ -2,12 +2,12 @@ from abc import ABC, abstractmethod
 from functools import lru_cache
 
 import orjson
-from fastapi import Depends, Request
-from redis.asyncio import Redis
-from pydantic import BaseModel
-
 from core.config import settings
 from db.redis import get_redis_instance
+from pydantic import BaseModel
+from redis.asyncio import Redis
+
+from fastapi import Depends, Request
 
 
 class AbstractCacheService(ABC):
@@ -30,7 +30,10 @@ class ExtractKeyFromRequest:
     @staticmethod
     def _calc_key(request: Request) -> str:
         """Общий метод получения параметра key для сервисов кэширования"""
-        return str(request.url)
+        body_key = ""
+        if hasattr(request, "_body"):
+            body_key = str(request._body)
+        return str(request.url) + body_key
 
 
 class RedisService(AbstractCacheService, ExtractKeyFromRequest):

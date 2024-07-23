@@ -6,11 +6,12 @@ from core.config import settings
 from core.logger import logger
 from db import elastic, redis
 from elasticsearch import AsyncElasticsearch
-from fastapi import FastAPI
-from fastapi.responses import ORJSONResponse
 from redis.asyncio import Redis
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
+
+from fastapi import FastAPI
+from fastapi.responses import ORJSONResponse
 
 
 @asynccontextmanager
@@ -51,5 +52,5 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "main:app", host="0.0.0.0", port=8000, log_level="debug", reload=True
+        "main:app", host="0.0.0.0", port=8001, log_level="debug", reload=True
     )

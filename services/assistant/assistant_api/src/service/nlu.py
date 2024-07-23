@@ -7,10 +7,10 @@ class NLUService:
         pass
 
     def get_intents(self, text):
-        pass
+        return []
 
     def get_entities(self, text):
-        pass
+        return []
 
 
 @lru_cache()

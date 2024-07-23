@@ -1,13 +1,15 @@
 from functools import lru_cache
+from pprint import pprint
 
 from core.cache import AbstractCacheService, get_cache_service
 from core.config import settings
 from core.enum import IndexName
 from core.service import CommonService
 from core.storage import ElasticService, get_storage_service
-from fastapi import Depends, Request
 from models.person import Person
 from pydantic import BaseModel
+
+from fastapi import Depends, Request
 
 
 class PersonService(CommonService):
@@ -49,10 +51,14 @@ class PersonService(CommonService):
             ],
         }
         """
+        print("\n")
+        pprint(search_query)
         matches = search_query.get("person", {})
         nested_matches = {}
-        for key, value in search_query.get("films", {}).items():
-            nested_matches["films." + key] = value
+        films: list[dict] = search_query.get("films", [])
+        for film in films:
+            for key, value in film.items():
+                nested_matches["films." + key] = value
 
         es_query = self._get_es_query(
             page_number=page_number,

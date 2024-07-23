@@ -1,0 +1,26 @@
+root:
+    .* кто $action_type (.)? ($preposition)? (.)? ($film_type)? $film_title (в)? ($film_creation_date)?
+slots:
+    role:
+        type: Action
+        source: $action_type
+    title:
+        source: $film_title
+    creation_date:
+        type: YANDEX.DATETIME
+        source: $film_creation_date
+
+$action_type:
+    $Action    
+$preposition:
+    %exact
+    в
+    для
+$film_type:
+    $FilmType
+$film_title:
+    .+
+$film_creation_date:
+    $YANDEX.DATETIME
+filler:
+    который | вышел | классный | весёлый | страшный | крутой |

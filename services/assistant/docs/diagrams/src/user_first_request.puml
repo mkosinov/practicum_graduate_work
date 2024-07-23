@@ -3,6 +3,7 @@ autonumber
 
 title Первое обращение пользователя к навыку
 actor User
+boundary YandexDialogs
 participant API
 participant DialogueController
 participant Assistant
@@ -12,10 +13,10 @@ boundary Dialogs
 
 ' Начало процесса
 
-User -> API++: Webhook
-API -> Assistant++: Инициализация экземпляра\nAssistant("Alice", webhook)
-API -> DialogueController++: передача созданного экземпляра Assistant
-DialogueController -> Assistant: Запрос интентов
+User -> YandexDialogs++: команда
+YandexDialogs -> API++: webhook json/http
+API -> DialogueController++: request,\nassistant=Alice
+DialogueController -> Assistant++: Запрос интентов
 Assistant --> DialogueController: "приветствие"
 DialogueController -> Assistant: Сессия новая?
 Assistant --> DialogueController: да
@@ -29,12 +30,13 @@ DialogueController -> ReplyGenerator ++: Запрос фразы для прив
 end
 ReplyGenerator -> DialogueController --: Фраза
 deactivate ReplyGenerator
-DialogueController -> Assistant: Подготовь ответ с учетом\nповерхности и фразы
-Assistant -> DialogueController --: ANSWER_TO_USER
-DialogueController -> API --: ANSWER_TO_USER
-API -> User: ANSWER_TO_USER
-
-API -> DialogKeeper ++: Сохранить диалог
+DialogueController -> API --: Фраза,\nstate\nend_session
+API -> Assistant: Подготовь ответ:\nфраза, state, end_session
+Assistant -> API --: AliceResponse
+API -> YandexDialogs: AliceResponse
+YandexDialogs -> User: ответ
+== Сохранение диалога ==
+API -> DialogKeeper ++: Сохранить диалог (webhook, AliceResponse)
 DialogKeeper -> Dialogs ++: POST Dialog
 Dialogs --> DialogKeeper --: Created
 DialogKeeper --> API --: Created

@@ -3,9 +3,10 @@ autonumber
 
 title Обращение пользователя к Алисе с запросом "кто автора фильма Звездные войны"
 actor User
+boundary YandexDialogs
 participant API
-participant Assistant
 participant DialogueController
+participant Assistant
 participant ReplyGenerator
 participant ServicesInteractor
 participant MoviesInterface
@@ -15,29 +16,30 @@ boundary Dialogs
 
 ' Начало процесса
 
-User -> API++: Webhook:\n"Кто режиссер\nфильма звёздные\nвойны 1984 года"
-API -> Assistant++: Инициализация экземпляра\nAssistant("Alice", webhook)
-API -> DialogueController++: Инициализация класса Dialogue Controller\nпередача созданного экземпляра Assistant
-DialogueController -> Assistant: Сессия новая?
+User -> YandexDialogs++: "Кто режиссер\nфильма звёздные\nвойны 1984 года"
+YandexDialogs -> API++: Webhook\njson/http
+API -> DialogueController++: webhook, assistant=Alice
+DialogueController -> Assistant++: Сессия новая?
 Assistant --> DialogueController: нет
-DialogueController -> Assistant: Запрос интентов\nи заполненных форм
-Assistant --> DialogueController: интенты, формы
-DialogueController -> DialogueController: форма заполнена полностью?
-DialogueController <- DialogueController: да
-DialogueController -> ServicesInteractor ++: интент "поиск режиссера"\nзаполненная форма
+DialogueController -> Assistant: Запрос интентов\nиз webhook
+Assistant --> DialogueController: интенты c формами
+DialogueController -> ServicesInteractor ++: интент "поиск персоны", заполненная форма
 ServicesInteractor -> MoviesInterface ++: Формирование запроса
 MoviesInterface -> MoviesAPI ++: отправка запроса в сервис
-MoviesAPI -> MoviesInterface --: поисковый ответ
-MoviesInterface -> ServicesInteractor --: Список ответов
-ServicesInteractor -> DialogueController --: Список ответов
-DialogueController -> ReplyGenerator ++: Подстановка результата_1\nв шаблон ответа
+MoviesAPI -> MoviesInterface --: результат поиска
+MoviesInterface -> ServicesInteractor --: результат поиска
+ServicesInteractor -> DialogueController --: результат поиска
+DialogueController -> ReplyGenerator ++: Подстановка результата в шаблон ответа
 ReplyGenerator -> DialogueController --: Фраза
-DialogueController -> Assistant: Подготовь ANSWER_TO_USER с фразой
-Assistant -> DialogueController --: ANSWER_TO_USER
-DialogueController -> API --: ANSWER_TO_USER
-API -> User: ANSWER_TO_USER
+DialogueController -> API --: Фраза, state
+API -> Assistant: подготовь response: фраза, state
+Assistant -> API --: AliceResponse
+API -> YandexDialogs: AliceResponse
+YandexDialogs -> User --: текст
+== Сохранение диалога ==
 API -> DialogKeeper ++: Сохранить диалог
 DialogKeeper -> Dialogs ++: POST Dialog
 Dialogs --> DialogKeeper --: Created
 DialogKeeper --> API --: Created
+deactivate API
 @enduml
