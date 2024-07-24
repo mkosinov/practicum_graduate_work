@@ -28,10 +28,10 @@ async def webhook_alice(
     logger.debug(alice_request.request.nlu.entities)
     assistant.get_intents(alice_request)
     assistant.get_entities(alice_request)
-    text, state, end_session = await dialogue_controller.process_request(
+    text, state, kwargs = await dialogue_controller.process_request(
         request=alice_request, assistant=assistant
     )
     response = assistant.create_response(
-        request=alice_request, state=state, text=text, end_session=end_session
+        request=alice_request, state=state, text=text, **kwargs
     )
     return response
