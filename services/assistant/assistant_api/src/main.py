@@ -1,5 +1,16 @@
+from contextlib import asynccontextmanager
+
 from api.v1 import webhook
 from fastapi import FastAPI
+from service.mongo import mongo_init
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await mongo_init()
+
+    yield
+
 
 app = FastAPI(
     title="Assistant API",
@@ -8,6 +19,7 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
+    lifespan=lifespan
 )
 
 app.include_router(webhook.router)

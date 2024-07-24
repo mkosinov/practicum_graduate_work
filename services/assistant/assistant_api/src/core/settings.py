@@ -3,6 +3,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import ClassVar, Tuple, Type
 
+from pydantic import Field
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -23,6 +24,10 @@ class Settings(BaseSettings):
     debug: bool = False
     logs_dir: Path = workdir.joinpath("logs")
     logging_level: int = logging.INFO
+    mongo_dsn_1: str = Field(default=...)
+    mongo_dsn_2: str = Field(default=...)
+    mongo_db_name: str = Field(default=...)
+    mongo_dialogue_collection: str = Field(default=...)
 
     @classmethod
     def settings_customise_sources(
@@ -41,6 +46,7 @@ class Settings(BaseSettings):
             TomlConfigSettingsSource(settings_cls),
         )
 
+settings = Settings()
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

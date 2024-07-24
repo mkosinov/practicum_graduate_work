@@ -1,0 +1,192 @@
+version: '3.9'
+
+services:
+  mongors1n1:
+    container_name: $MONGORS1N1
+    image: mongo
+    command: mongod --shardsvr --replSet mongors1 --dbpath /data/db --port 27017
+    ports:
+      - 27017:27017
+    expose:
+      - "27017"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - data1:/data/db
+    networks:
+      - movies_project_net
+
+  mongors1n2:
+    container_name: $MONGORS1N2
+    image: mongo
+    command: mongod --shardsvr --replSet mongors1 --dbpath /data/db --port 27017
+    ports:
+      - 27027:27017
+    expose:
+      - "27017"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - data2:/data/db
+    networks:
+      - movies_project_net
+
+  mongors1n3:
+    container_name: $MONGORS1N3
+    image: mongo
+    command: mongod --shardsvr --replSet mongors1 --dbpath /data/db --port 27017
+    ports:
+      - 27037:27017
+    expose:
+      - "27017"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - data3:/data/db
+    networks:
+      - movies_project_net
+
+  mongors2n1:
+    container_name: $MONGORS2N1
+    image: mongo
+    command: mongod --shardsvr --replSet mongors2 --dbpath /data/db --port 27017
+    ports:
+      - 27047:27017
+    expose:
+      - "27017"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - data4:/data/db
+    networks:
+      - movies_project_net
+
+  mongors2n2:
+    container_name: $MONGORS2N2
+    image: mongo
+    command: mongod --shardsvr --replSet mongors2 --dbpath /data/db --port 27017
+    ports:
+      - 27057:27017
+    expose:
+      - "27017"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - data5:/data/db
+    networks:
+      - movies_project_net
+
+  mongors2n3:
+    container_name: $MONGORS2N3
+    image: mongo
+    command: mongod --shardsvr --replSet mongors2 --dbpath /data/db --port 27017
+    ports:
+      - 27067:27017
+    expose:
+      - "27017"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - data6:/data/db
+    networks:
+      - movies_project_net
+
+  mongocfg1:
+    container_name: $MONGOCFG1
+    image: mongo
+    command: mongod --configsvr --replSet mongors1conf --dbpath /data/db --port 27017
+    expose:
+      - "27017"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - config1:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - movies_project_net
+
+  mongocfg2:
+    container_name: $MONGOCFG2
+    image: mongo
+    command: mongod --configsvr --replSet mongors1conf --dbpath /data/db --port 27017
+    expose:
+      - "27017"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - config2:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - movies_project_net
+
+  mongocfg3:
+    container_name: $MONGOCFG3
+    image: mongo
+    command: mongod --configsvr --replSet mongors1conf --dbpath /data/db --port 27017
+    expose:
+      - "27017"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - config3:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - movies_project_net
+
+  mongos1:
+    container_name: $MONGOS1
+    image: mongo
+    depends_on:
+      mongocfg1:
+        condition: service_healthy
+      mongocfg2:
+        condition: service_healthy
+      mongocfg3:
+        condition: service_healthy
+    command: mongos --configdb mongors1conf/$MONGOCFG1:27017,$MONGOCFG2:27017,$MONGOCFG3:27017 --port 27017 --bind_ip_all
+    ports:
+      - 27019:27017
+    expose:
+      - "27017"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - movies_project_net
+
+  mongos2:
+    container_name: $MONGOS2
+    image: mongo
+    depends_on:
+      mongocfg1:
+        condition: service_healthy
+      mongocfg2:
+        condition: service_healthy
+      mongocfg3:
+        condition: service_healthy
+    command: mongos --configdb mongors1conf/$MONGOCFG1:27017,$MONGOCFG2:27017,$MONGOCFG3:27017 --port 27017 --bind_ip_all
+    ports:
+      - 27020:27017
+    expose:
+      - "27017"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - movies_project_net
+
+volumes:
+  config1:
+  config2:
+  config3:
+  data1:
+  data2:
+  data3:
+  data4:
+  data5:
+  data6:
+
+networks:
+  movies_project_net:
+    external: true
