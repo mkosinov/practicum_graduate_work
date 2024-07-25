@@ -3,8 +3,13 @@ from functools import lru_cache
 from pathlib import Path
 from typing import ClassVar, Tuple, Type
 
-from pydantic_settings import (BaseSettings, PydanticBaseSettingsSource,
-                               SettingsConfigDict, TomlConfigSettingsSource)
+from pydantic import Field
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+    TomlConfigSettingsSource,
+)
 
 
 class Settings(BaseSettings):
@@ -20,6 +25,13 @@ class Settings(BaseSettings):
     logs_dir: Path = workdir.joinpath("logs")
     logging_level: int = logging.INFO
 
+    # mongo
+    mongo_dsn_1: str = Field(default=...)
+    mongo_dsn_2: str = Field(default=...)
+    mongo_db_name: str = Field(default=...)
+    mongo_dialogue_collection: str = Field(default=...)
+
+    # movies
     movies_api_host: str = "localhost"
     movies_api_port: str = "8001"
 
@@ -43,6 +55,9 @@ class Settings(BaseSettings):
             file_secret_settings,
             TomlConfigSettingsSource(settings_cls),
         )
+
+
+settings = Settings()
 
 
 @lru_cache(maxsize=1)
