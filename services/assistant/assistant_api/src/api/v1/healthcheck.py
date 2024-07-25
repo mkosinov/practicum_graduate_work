@@ -1,0 +1,38 @@
+from http import HTTPStatus
+
+import httpx
+from api.v1.webhook import router as webhook_router
+from api.v1.webhook import webhook_alice
+from assistant.alice import Alice, get_alice
+from core.logger import Logger, get_logger
+from core.settings import get_settings
+from fastapi import APIRouter, Depends, HTTPException
+from schema.alice import AliceRequest, Request
+from service.dialog_controller import DialogController, get_dialog_controller
+from service.services_interactor import (ServicesInteractor,
+                                         get_service_interactor)
+
+router = APIRouter()
+
+router.prefix = "/healthcheck"
+
+@router.get("/liveness")
+async def liveness():
+    return {"heathcheck": "OK"}
+
+
+@router.get("/readiness")
+async def readiness(
+    services_interactor: ServicesInteractor = Depends(get_service_interactor),
+    assistant: Alice = Depends(get_alice),
+    dialogue_controller: DialogController = Depends(get_dialog_controller),
+    logger: Logger = Depends(get_logger),    
+):
+    readiness = {
+        "assistant_api": False,
+        "movies_api": False,
+    }
+    alice_response = await webhook_alice(alice_request=AliceRequest(request=Request(command="healthcheck", type="HealthReadiness"), version="1.0"), assistant=assistant, dialogue_controller=dialogue_controller, logger=logger)
+    readiness["assistant_api"] = bool(alice_response.response.text)
+    readiness["movies_api"] = await services_interactor.movies_api.health_readiness()
+    return readiness

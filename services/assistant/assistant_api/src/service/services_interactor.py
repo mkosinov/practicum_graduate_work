@@ -1,3 +1,4 @@
+import asyncio
 from functools import lru_cache
 
 from interface.movies_api import (FilmResponse, MoviesApiInterface,

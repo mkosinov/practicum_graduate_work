@@ -3,6 +3,7 @@ import inspect
 import random
 from collections import namedtuple
 from functools import lru_cache, wraps
+from time import sleep, time
 from typing import Callable
 
 from assistant.alice import Alice
@@ -12,6 +13,7 @@ from service.nlu import NLUService, get_nlu_service
 from service.reply_generator import ReplyGenerator, get_reply_generator
 from service.services_interactor import (ServicesInteractor,
                                          get_service_interactor)
+from wrapt_timeout_decorator import timeout
 
 
 def async_add_dialog_node_to_return(func):
@@ -72,14 +74,21 @@ class DialogController:
             return response(*self.help())
         for intent_id in list(assistant_intents)+nlu_intents:
             if intent_id in self.search_intents.keys():
-                reply, state = await self.search_intents.get(intent_id)(
-                    assistant.get_intents(request)
-                    .get(intent_id, {})
-                    .get("slots", {})
-                )
+                try:
+                    reply, state = await asyncio.wait_for(self.search_intents.get(intent_id)(
+                        assistant.get_intents(request)
+                        .get(intent_id, {})
+                        .get("slots", {})
+                    ), timeout=2)
+                except TimeoutError:
+                    reply, state = self.timeout()                    
         if not reply:
             reply, state = self.fallback()
         return response(reply, state)
+
+    @add_dialog_node_to_return
+    def timeout(self) -> tuple[str, dict | None]:
+        return self.reply_generator.reply_enum.timeout.value, None
 
     @add_dialog_node_to_return
     def fallback(self) -> tuple[str, dict | None]:

@@ -1,9 +1,13 @@
+import asyncio
+from logging import Logger as PyLogger
 from pprint import pprint
+from time import sleep
 
+import backoff
 from assistant.alice import Alice, get_alice
-from core.logger import Logger, get_logger
-from fastapi import APIRouter, Body, Depends
-from schema.alice import AliceRequest, AliceResponse
+from core.logger import get_logger
+from fastapi import APIRouter, Body, Depends, FastAPI, HTTPException
+from schema.alice import AliceRequest, AliceResponse, InnerResponse
 from service.dialog_controller import DialogController, get_dialog_controller
 
 router = APIRouter(prefix="/webhook")
@@ -16,22 +20,19 @@ examples = {
 
 examples_list = list(examples.values())
 
-@router.post(path="/alice", response_model=Alice.Response, )
+@router.post(path="/alice", response_model=Alice.Response)
 async def webhook_alice(
     alice_request: Alice.Request = Body(examples=examples_list),
     assistant: Alice = Depends(get_alice),
     dialogue_controller: DialogController = Depends(get_dialog_controller),
-    logger: Logger = Depends(get_logger),
+    logger: PyLogger = Depends(get_logger)
 ) -> AliceResponse:
-    print(alice_request.model_dump_json())
-    logger.debug(alice_request.request.nlu.intents)
-    logger.debug(alice_request.request.nlu.entities)
-    assistant.get_intents(alice_request)
-    assistant.get_entities(alice_request)
-    text, state, kwargs = await dialogue_controller.process_request(
-        request=alice_request, assistant=assistant
-    )
+    logger.debug(alice_request.model_dump_json())
+    text, state, kwargs = await dialogue_controller.process_request(request=alice_request, assistant=assistant)
     response = assistant.create_response(
         request=alice_request, state=state, text=text, **kwargs
-    )
+    )    
     return response
+
+
+

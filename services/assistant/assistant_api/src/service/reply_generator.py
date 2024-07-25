@@ -70,7 +70,15 @@ class ReplyGenerator:
         return random.choice([
             "У меня нет описания этого фильма. Попробуйте поискать что-то другое.",
             "Кажется кто-то забыл добавить описание фильма. Попробуйте поискать что-то ещё.",
-        ])    
+        ])
+
+    @staticmethod
+    def timeout():
+        return random.choice([
+            "Вносим улучшения в работу. Просьба повторить запрос чуть позже.",
+            "Кажется что-то пошло не так. Сообщили Василию, он уже спешит исправлять проблему.",
+            "Что-то упало.. Позвали Василия, скоро поднимет и вы снова сможете задавать мне вопросы.",
+        ])       
 
 class ReplyEnum(Enum):
     hello_first_time = ReplyGenerator.hello_first_time()
@@ -82,6 +90,7 @@ class ReplyEnum(Enum):
     empty_repeat_response = ReplyGenerator.empty_repeat_response()
     empty_search_result = ReplyGenerator.empty_search_result()
     empty_film_description = ReplyGenerator.empty_film_description()
+    timeout = ReplyGenerator.timeout()
 
 @lru_cache()
 def get_reply_generator() -> ReplyGenerator:
