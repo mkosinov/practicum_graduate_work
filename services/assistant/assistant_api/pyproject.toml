@@ -12,11 +12,16 @@ gunicorn = "^22.0.0"
 backoff = "^2.2.1"
 timeout-decorator = "^0.5.0"
 wrapt-timeout-decorator = "^1.5.1"
+beanie = "^1.26.0"
 
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.13.2"
 ruff = "^0.5.0"
+pytest = "^8.3.1"
+
+[tool.isort]
+src_paths = ["src", "tests"]
 
 [build-system]
 requires = ["poetry-core"]

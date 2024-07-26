@@ -2,8 +2,9 @@ from datetime import date
 from http import HTTPStatus
 
 import httpx
-from core.settings import get_settings
 from pydantic import BaseModel, ConfigDict
+
+from core.settings import get_settings
 
 search_films_structure = {
     "movie": {
@@ -18,19 +19,18 @@ search_films_structure = {
 }
 
 search_persons_structure = {
-    "person": {
-        "full_name": str
-        },
+    "person": {"full_name": str},
     "films": [
         {
             "title": str,
             "description": str,
             "imdb_rating": float,
             "creation_date": str,
-            "roles": str
+            "roles": str,
         }
     ],
 }
+
 
 class MovieSchema(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -40,14 +40,17 @@ class MovieSchema(BaseModel):
     creation_date: str | None = None
     subscribers_only: bool | None = None
 
+
 class GenreSchema(BaseModel):
-    model_config = ConfigDict(extra="ignore")    
+    model_config = ConfigDict(extra="ignore")
     name: str | None = None
 
+
 class PersonSchema(BaseModel):
-    model_config = ConfigDict(extra="ignore")    
+    model_config = ConfigDict(extra="ignore")
     full_name: str | None = None
     role: str | None = None
+
 
 class SearchFilmsSchema(BaseModel):
     movie: MovieSchema = MovieSchema()
@@ -67,13 +70,16 @@ class SearchFilmsSchema(BaseModel):
     }
     """
 
+
 class GenreInnerResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
     name: str | None
 
+
 class PersonInnerResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
     full_name: str | None = ""
+
 
 class FilmResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -95,10 +101,12 @@ class PersonFilms(BaseModel):
     creation_date: date | None = None
     roles: str | None = None
 
+
 class PersonResponse(BaseModel):
-    model_config = ConfigDict(extra="ignore")    
+    model_config = ConfigDict(extra="ignore")
     full_name: str | None = None
     films: list[PersonFilms] | None = None
+
 
 class MoviesApiInterface:
     def create_film_query_dict(self, slots: dict, structure: dict) -> dict:
@@ -112,7 +120,7 @@ class MoviesApiInterface:
             elif key in structure.get("persons")[0].keys():
                 search_query["persons"].append({key: value.get("value", "")})
         return search_query
-    
+
     def create_person_query_dict(self, slots: dict, structure: dict) -> dict:
         search_query = {}
         search_query = {"person": {}, "films": []}
@@ -121,53 +129,48 @@ class MoviesApiInterface:
                 search_query["person"][key] = value.get("value", "")
             elif key in structure.get("films")[0].keys():
                 search_query["films"].append({key: value.get("value", "")})
-        search_query["films"].append({"roles": slots.get("role", {}).get("value", "")})
+        search_query["films"].append(
+            {"roles": slots.get("role", {}).get("value", "")}
+        )
         return search_query
 
-    # def create_query(self, slots: dict) -> SearchFilmsSchema:
-    #     movie = MovieSchema(
-    #         title=slots.get("title", {}).get("value", None),
-    #         description=slots.get("description", {}).get("value", None),
-    #         imdb_rating=slots.get("imdb_rating", {}).get("value", None),
-    #         creation_date=slots.get("creation_date", {}).get("value", None),
-    #         subscribers_only=slots.get("subscribers_only", {}).get("value", None),
-    #     )
-    #     genre = GenreSchema(
-    #         name=slots.get("genre", {}).get("value", None),
-    #     )
-    #     person = PersonSchema(
-    #         full_name=slots.get("person", {}).get("value", None),
-    #         role=slots.get("role", {}).get("value", None),
-    #     )
-    #     search_film_query = SearchFilmsSchema(
-    #         movie=movie,
-    #         genres=[genre],
-    #         persons=[person],
-    #     )
-    #     return search_film_query
-
     async def search_films(self, slots: dict) -> FilmResponse | None:
-        search_query = self.create_film_query_dict(slots, search_films_structure)
-        response = httpx.post(get_settings().movies_api_films_advanced_search_url, json=search_query, headers={'Content-Type': 'application/json'})
+        search_query = self.create_film_query_dict(
+            slots, search_films_structure
+        )
+        response = httpx.post(
+            get_settings().movies_api_films_advanced_search_url,
+            json=search_query,
+            headers={"Content-Type": "application/json"},
+        )
         if response.status_code == HTTPStatus.OK:
             return FilmResponse.model_validate(response.json()[0])
         else:
             return None
-    
+
     async def search_persons(self, slots: dict) -> FilmResponse | None:
-        search_query = self.create_person_query_dict(slots, search_persons_structure)
-        response = httpx.post(get_settings().movies_api_persons_advanced_search_url, json=search_query, headers={'Content-Type': 'application/json'})
+        search_query = self.create_person_query_dict(
+            slots, search_persons_structure
+        )
+        response = httpx.post(
+            get_settings().movies_api_persons_advanced_search_url,
+            json=search_query,
+            headers={"Content-Type": "application/json"},
+        )
         if response.status_code == HTTPStatus.OK:
             return PersonResponse.model_validate(response.json()[0])
         else:
             return None
 
     async def health_readiness(self) -> bool:
-        response = httpx.get(get_settings().movies_api_health_readiness_url, timeout=1)
+        response = httpx.get(
+            get_settings().movies_api_health_readiness_url, timeout=1
+        )
         if response.status_code == HTTPStatus.OK:
             return True
         else:
             return False
+
 
 def get_movies_api_interface() -> MoviesApiInterface:
     return MoviesApiInterface()

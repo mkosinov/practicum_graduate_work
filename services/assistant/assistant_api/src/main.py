@@ -1,15 +1,14 @@
-import asyncio
 from contextlib import asynccontextmanager
 
-from api.v1 import healthcheck, webhook
-from assistant.alice import Alice
-from fastapi import FastAPI, Request, responses
-from fastapi.responses import JSONResponse
-from schema.alice import AliceResponse, InnerResponse
+from api.v1 import dialogs, healthcheck, webhook
+from fastapi import FastAPI
+from service.mongo import mongo_init
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await mongo_init()
+
     yield
 
 app = FastAPI(
@@ -20,10 +19,12 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
 
 app.include_router(webhook.router)
 app.include_router(healthcheck.router)
+app.include_router(dialogs.router)
 
 if __name__ == "__main__":
     import uvicorn
