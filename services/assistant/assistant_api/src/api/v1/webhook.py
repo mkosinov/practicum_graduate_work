@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Body, Depends
-from services.assistant.assistant_api.src.schema.alice import AliceResponse
 
 from assistant.alice import Alice, get_alice
+from schema.alice import AliceResponse
 from service.dialog_controller import DialogController, get_dialog_controller
 from service.dialog_keeper import DialogueKeeperService, get_dialogue_keeper
 
