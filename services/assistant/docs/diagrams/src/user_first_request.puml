@@ -1,0 +1,44 @@
+@startuml "Первое обращение пользователя к навыку"
+autonumber
+
+title Первое обращение пользователя к навыку
+actor User
+boundary YandexDialogs
+participant API
+participant DialogueController
+participant Assistant
+participant ReplyGenerator
+participant DialogKeeper
+boundary Dialogs
+
+' Начало процесса
+
+User -> YandexDialogs++: команда
+YandexDialogs -> API++: webhook json/http
+API -> DialogueController++: request,\nassistant=Alice
+DialogueController -> Assistant++: Запрос интентов
+Assistant --> DialogueController: "приветствие"
+DialogueController -> Assistant: Сессия новая?
+Assistant --> DialogueController: да
+DialogueController -> Assistant: Пользовался пользователь\nранее навыком?
+opt
+Assistant --> DialogueController: <font color=green> да
+DialogueController -> ReplyGenerator ++: Запрос фразы для приветствия\n<font color=green>существующего</font> пользователя
+else
+Assistant --> DialogueController: <font color=red> нет
+DialogueController -> ReplyGenerator ++: Запрос фразы для приветствия\n<font color=red>нового</font> пользователя
+end
+ReplyGenerator -> DialogueController --: Фраза
+deactivate ReplyGenerator
+DialogueController -> API --: Фраза,\nstate\nend_session
+API -> Assistant: Подготовь ответ:\nфраза, state, end_session
+Assistant -> API --: AliceResponse
+API -> YandexDialogs: AliceResponse
+YandexDialogs -> User: ответ
+== Сохранение диалога ==
+API -> DialogKeeper ++: Сохранить диалог (webhook, AliceResponse)
+DialogKeeper -> Dialogs ++: POST Dialog
+Dialogs --> DialogKeeper --: Created
+DialogKeeper --> API --: Created
+deactivate API
+@enduml

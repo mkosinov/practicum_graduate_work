@@ -1,0 +1,38 @@
+root:
+    .* ($question_word)? .* ($film_type)? .* ($genre_word)? $film_genre .* [($film_action)? ($film_creation_date)? ($rating_word $film_rating)?]
+slots:
+    name:
+        type: Genre
+        source: $film_genre
+    creation_date:
+        source: $film_creation_date
+    imdb_rating:
+        source: $film_rating
+$question_word:
+    %exact
+    какие
+    покажи
+    расскажи
+    что за
+    какой
+    назови
+$film_type:
+    $FilmType
+$genre_word:
+    %lemma
+    жанр    
+$film_genre:
+    $Genre
+$film_action:
+    %lemma
+    вышел
+    появился
+    показывали
+$film_creation_date:
+    $YANDEX.DATETIME
+$rating_word:
+    %lemma
+    оценка
+    рейтинг
+$film_rating:
+    $YANDEX.NUMBER

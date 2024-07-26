@@ -1,0 +1,82 @@
+name: movies_tests
+
+services:
+  elastic:
+    image: elasticsearch:8.6.2
+    container_name: elastic-test
+    expose:
+      - 9200
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms200m -Xmx200m"
+      - ingest.geoip.downloader.enabled=false
+      - cluster.routing.allocation.disk.threshold_enabled=false
+      - bootstrap.memory_lock=true
+      - logger.level=INFO
+    healthcheck:
+      test: curl -s -f http://localhost:9200 || exit 1
+      interval: 10s
+      timeout: 1s
+      retries: 10
+    mem_limit: 1g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    restart: "no"
+
+  redis:
+    container_name: redis-test
+    image: redis:7.2.3-alpine3.19
+    expose:
+      - 6379
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 1s
+      retries: 10
+    command: redis-server --save 60 1 --loglevel notice
+
+  fastapi:
+    environment:
+      - REDIS_HOST=redis-test
+      - ES_HOST=elastic-test  
+    container_name: fastapi-test
+    build:
+      context: ./../fastapi
+    image: fastapi_img
+    volumes:
+      - fastapi_log:/usr/src/fastapi/logs
+    expose:
+      - 8000
+    depends_on:
+      elastic:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: "no"
+    healthcheck:
+      test: curl -s -f http://localhost:8000/api/openapi || exit 1
+      interval: 10s
+      timeout: 1s
+      retries: 10
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+
+  movies.tests:
+    environment:
+      - REDIS_HOST=redis-test
+      - ES_HOST=elastic-test
+      - FASTAPI_HOST=fastapi-test
+    container_name: movies.tests
+    build:
+      context: .
+    image: tests_img
+    depends_on:
+      fastapi:
+        condition: service_healthy
+    command: poetry run pytest
+
+volumes:
+  fastapi_log:

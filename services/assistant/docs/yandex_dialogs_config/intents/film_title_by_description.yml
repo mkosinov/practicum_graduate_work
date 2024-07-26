@@ -1,0 +1,38 @@
+root:
+    .* $question_word .* ($film_type)? .* $proposal $film_description [($genre_word)? ($film_genre)? ($film_action)? (в)? ($film_creation_date)?]
+slots:
+    description:
+        source: $film_description
+    name:
+        type: Genre
+        source: $film_genre
+    creation_date:
+        source: $film_creation_date
+$question_word:
+    %lemma
+    название
+    называется
+$film_type:
+    $FilmType
+$proposal:
+    %exact
+    про
+    когда
+    в котором
+    который
+    где
+    с
+$film_description:
+    .+
+$genre_word:
+    %lemma
+    жанр    
+$film_genre:
+    $Genre
+$film_action:
+    %lemma
+    вышел
+    появился
+    показывали
+$film_creation_date:
+    $YANDEX.DATETIME
