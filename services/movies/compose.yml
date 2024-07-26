@@ -15,8 +15,6 @@ services:
       - logger.level=INFO
     expose:
       - 9200
-    ports:
-      - 9200:9200
     volumes:
       - ./elastic_data:/usr/share/elasticsearch/data
     healthcheck:
@@ -39,8 +37,6 @@ services:
     image: redis:7.2.3-alpine3.19
     expose:
       - 6379
-    ports:
-      - 6379:6379
     volumes:
       - redis_data:/data
     restart: always
@@ -68,8 +64,6 @@ services:
       - ES_HOST=movies.elastic
     expose:
       - 8000
-    ports:
-      - 8001:8000
     volumes:
       - fastapi_log:/usr/src/fastapi/logs
     healthcheck:
@@ -90,7 +84,7 @@ services:
     container_name: movies.nginx
     image: nginx:1.25-bookworm
     ports:
-      - 80:80
+      - 8001:80
     volumes:
       - nginx_log:/var/log/nginx
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
@@ -110,3 +104,4 @@ volumes:
 
 networks:
   movies_project_net:
+    external: true

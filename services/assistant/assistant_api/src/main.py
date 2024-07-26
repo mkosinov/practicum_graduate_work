@@ -1,7 +1,8 @@
 from contextlib import asynccontextmanager
 
-from api.v1 import webhook
 from fastapi import FastAPI
+
+from api.v1 import dialogs, webhook
 from service.mongo import mongo_init
 
 
@@ -19,10 +20,11 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 app.include_router(webhook.router)
+app.include_router(dialogs.router)
 
 if __name__ == "__main__":
     import uvicorn
