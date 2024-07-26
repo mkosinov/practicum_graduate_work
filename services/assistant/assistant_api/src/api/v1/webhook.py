@@ -1,6 +1,6 @@
-from assistant.alice import Alice, get_alice
-from core.logger import Logger, get_logger
 from fastapi import APIRouter, Body, Depends
+
+from assistant.alice import Alice, get_alice
 from schema.alice import AliceResponse
 from service.dialog_controller import DialogController, get_dialog_controller
 from service.dialog_keeper import DialogueKeeperService, get_dialogue_keeper
@@ -24,7 +24,6 @@ async def webhook_alice(
     alice_request: Alice.Request = Body(examples=examples_list),
     assistant: Alice = Depends(get_alice),
     dialogue_controller: DialogController = Depends(get_dialog_controller),
-    logger: Logger = Depends(get_logger),
     dialogue_keeper: DialogueKeeperService = Depends(get_dialogue_keeper),
 ) -> AliceResponse:
     text, state, kwargs = await dialogue_controller.process_request(

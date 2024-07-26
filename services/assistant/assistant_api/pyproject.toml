@@ -9,6 +9,9 @@ python = "^3.12"
 fastapi = "^0.111.0"
 pydantic-settings = "^2.3.4"
 gunicorn = "^22.0.0"
+backoff = "^2.2.1"
+timeout-decorator = "^0.5.0"
+wrapt-timeout-decorator = "^1.5.1"
 beanie = "^1.26.0"
 
 

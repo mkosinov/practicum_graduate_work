@@ -1,17 +1,18 @@
 import asyncio
-import inspect
-import random
 from collections import namedtuple
 from functools import lru_cache, wraps
 from typing import Callable
 
-from assistant.alice import Alice
 from fastapi import Depends
+
+from assistant.alice import Alice
 from schema.alice import AliceRequest
 from service.nlu import NLUService, get_nlu_service
 from service.reply_generator import ReplyGenerator, get_reply_generator
-from service.services_interactor import (ServicesInteractor,
-                                         get_service_interactor)
+from service.services_interactor import (
+    ServicesInteractor,
+    get_service_interactor,
+)
 
 
 def async_add_dialog_node_to_return(func):
@@ -21,21 +22,27 @@ def async_add_dialog_node_to_return(func):
         if isinstance(response, tuple):
             return response
         return (response, {"dialog_node": func.__name__})
+
     return async_wrapper
 
+
 def add_dialog_node_to_return(func):
-    @wraps(func)        
+    @wraps(func)
     def wrapper(self, *args, **kwargs):
         response = func(self, *args, **kwargs)
         if isinstance(response, tuple):
             return response
         return (response, {"dialog_node": func.__name__})
+
     return wrapper
 
 
 class DialogController:
     def __init__(
-        self, nlu_service: NLUService, services_interactor: ServicesInteractor, reply_generator: ReplyGenerator
+        self,
+        nlu_service: NLUService,
+        services_interactor: ServicesInteractor,
+        reply_generator: ReplyGenerator,
     ):
         self.nlu_service = nlu_service
         self.services_interactor = services_interactor
@@ -45,41 +52,59 @@ class DialogController:
             "film_title_by_description": self.film_title,
             "film_title_by_genre": self.film_title,
             "person_name_by_action_title": self.person_name,
-            "person_name_by_role_title": self.person_name
+            "person_name_by_role_title": self.person_name,
         }
 
     async def process_request(self, request: AliceRequest, assistant: Alice):
-        response = namedtuple("dialog_response", "text, state, kwargs", defaults=("", {}, {}))
+        response = namedtuple(
+            "dialog_response", "text, state, kwargs", defaults=("", {}, {})
+        )
         if assistant.is_new_session(request):
-            return response(*self.hello(
-                assistant.is_first_user_request(request)
-            ))
+            return response(
+                *self.hello(assistant.is_first_user_request(request))
+            )
         assistant_intents = assistant.get_intents(request).keys()
         nlu_intents = self.nlu_service.get_intents(request)
         nlu_entities = self.nlu_service.get_entities(request)
         reply = ""
         if "YANDEX.REPEAT" in assistant_intents:
-            return response(*self.repeat_response(
-                assistant.get_last_response(request)
-            ))
+            return response(
+                *self.repeat_response(
+                    assistant.get_last_response(request),
+                    assistant.get_dialog_node_state(request),
+                )
+            )
         elif "repeat_request" in assistant_intents:
-            return response(*self.repeat_request(
-                assistant.get_last_request(request), assistant.get_dialog_node_state(request)
-            ))
+            return response(
+                *self.repeat_request(
+                    assistant.get_last_request(request),
+                    assistant.get_dialog_node_state(request),
+                )
+            )
         elif "bye" in assistant_intents:
-            return response(*self.bye(), end_session=True)
+            return response(*self.bye(), {"end_session": True})
         elif "YANDEX.HELP" in assistant_intents:
             return response(*self.help())
-        for intent_id in list(assistant_intents)+nlu_intents:
+        for intent_id in list(assistant_intents) + nlu_intents:
             if intent_id in self.search_intents.keys():
-                reply, state = await self.search_intents.get(intent_id)(
-                    assistant.get_intents(request)
-                    .get(intent_id, {})
-                    .get("slots", {})
-                )
+                try:
+                    reply, state = await asyncio.wait_for(
+                        self.search_intents.get(intent_id)(
+                            assistant.get_intents(request)
+                            .get(intent_id, {})
+                            .get("slots", {})
+                        ),
+                        timeout=2,
+                    )
+                except TimeoutError:
+                    reply, state = self.timeout()
         if not reply:
             reply, state = self.fallback()
         return response(reply, state)
+
+    @add_dialog_node_to_return
+    def timeout(self) -> tuple[str, dict | None]:
+        return self.reply_generator.reply_enum.timeout.value, None
 
     @add_dialog_node_to_return
     def fallback(self) -> tuple[str, dict | None]:
@@ -102,7 +127,10 @@ class DialogController:
     def repeat_response(self, previous_response, previous_dialog_node_state):
         if previous_response:
             return previous_response, previous_dialog_node_state
-        return self.reply_generator.reply_enum.empty_repeat_response.value, None
+        return (
+            self.reply_generator.reply_enum.empty_repeat_response.value,
+            None,
+        )
 
     def repeat_request(self, previous_request, previous_dialog_node_state):
         if previous_request:
@@ -116,7 +144,10 @@ class DialogController:
     ):
         film = await self.services_interactor.search_films(slots)
         if not film:
-            return self.reply_generator.reply_enum.empty_search_result.value, None
+            return (
+                self.reply_generator.reply_enum.empty_search_result.value,
+                None,
+            )
         reply = film.title
         if film.creation_date:
             reply += f"\nДата выхода: {film.creation_date}"
@@ -129,20 +160,26 @@ class DialogController:
     ):
         film = await self.services_interactor.search_films(slots)
         if not film:
-            return self.reply_generator.reply_enum.empty_search_result.value, None
+            return (
+                self.reply_generator.reply_enum.empty_search_result.value,
+                None,
+            )
         if not film.description:
             return self.reply_generator.reply_enum.empty_film_description.value
         reply = film.description
         return reply
 
-    @async_add_dialog_node_to_return    
+    @async_add_dialog_node_to_return
     async def person_name(
         self,
         slots: dict,
     ):
         person = await self.services_interactor.search_persons(slots)
         if not person:
-            return self.reply_generator.reply_enum.empty_search_result.value, None
+            return (
+                self.reply_generator.reply_enum.empty_search_result.value,
+                None,
+            )
         return person.full_name
 
 
@@ -153,5 +190,7 @@ def get_dialog_controller(
     reply_generator: ReplyGenerator = Depends(get_reply_generator),
 ) -> DialogController:
     return DialogController(
-        nlu_service=nlu_service, services_interactor=services_interactor, reply_generator=reply_generator
+        nlu_service=nlu_service,
+        services_interactor=services_interactor,
+        reply_generator=reply_generator,
     )

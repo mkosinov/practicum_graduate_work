@@ -23,6 +23,7 @@ class RequestType(StrEnum):
     AudioPlayerPlaybackFailed = "AudioPlayer.PlaybackFailed"
     PurchaseConfirmation = "Purchase.Confirmation"
     ShowPull = "Show.Pull"
+    HealthReadiness = "HealthReadiness"
 
 
 class EntityType(StrEnum):
