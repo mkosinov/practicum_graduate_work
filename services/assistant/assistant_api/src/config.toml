@@ -1,6 +1,6 @@
 debug = true
 movies_api_host = "movies.proxy"
-movies_api_port = "8001"
+movies_api_port = "80"
 
 mongo_dsn_1 = "mongodb://mongos1:27017"
 mongo_dsn_2 = "mongodb://mongos2:27017"

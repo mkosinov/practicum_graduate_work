@@ -7,7 +7,6 @@ from fastapi import Depends
 
 from assistant.alice import Alice
 from schema.alice import AliceRequest
-from service.nlu import NLUService, get_nlu_service
 from service.reply_generator import ReplyGenerator, get_reply_generator
 from service.services_interactor import (
     ServicesInteractor,
@@ -40,11 +39,9 @@ def add_dialog_node_to_return(func):
 class DialogController:
     def __init__(
         self,
-        nlu_service: NLUService,
         services_interactor: ServicesInteractor,
         reply_generator: ReplyGenerator,
     ):
-        self.nlu_service = nlu_service
         self.services_interactor = services_interactor
         self.reply_generator = reply_generator
         self.search_intents: dict[str, Callable] = {
@@ -64,8 +61,6 @@ class DialogController:
                 *self.hello(assistant.is_first_user_request(request))
             )
         assistant_intents = assistant.get_intents(request).keys()
-        nlu_intents = self.nlu_service.get_intents(request)
-        nlu_entities = self.nlu_service.get_entities(request)
         reply = ""
         if "YANDEX.REPEAT" in assistant_intents:
             return response(
@@ -85,7 +80,7 @@ class DialogController:
             return response(*self.bye(), {"end_session": True})
         elif "YANDEX.HELP" in assistant_intents:
             return response(*self.help())
-        for intent_id in list(assistant_intents) + nlu_intents:
+        for intent_id in list(assistant_intents):
             if intent_id in self.search_intents.keys():
                 try:
                     reply, state = await asyncio.wait_for(
@@ -185,12 +180,10 @@ class DialogController:
 
 @lru_cache()
 def get_dialog_controller(
-    nlu_service: NLUService = Depends(get_nlu_service),
     services_interactor: ServicesInteractor = Depends(get_service_interactor),
     reply_generator: ReplyGenerator = Depends(get_reply_generator),
 ) -> DialogController:
     return DialogController(
-        nlu_service=nlu_service,
         services_interactor=services_interactor,
         reply_generator=reply_generator,
     )
