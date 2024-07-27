@@ -12,6 +12,11 @@ from pydantic_settings import (
 )
 
 
+class Timeouts(BaseSettings):
+    movies_api_response: float
+    generate_response: float
+
+
 class Settings(BaseSettings):
     workdir: ClassVar[Path] = Path(__file__).parent.parent
     model_config = SettingsConfigDict(
@@ -48,6 +53,8 @@ class Settings(BaseSettings):
     movies_api_persons_advanced_search: str = "/persons/advanced_search"
     movies_api_health_readiness: str = "/films?page_number=1&page_size=1"
 
+    timeouts: Timeouts
+
     @property
     def _movies_api_url(self) -> str:
         return f"http://{self.movies_api_host}:{self.movies_api_port}/api/v1"
@@ -82,9 +89,6 @@ class Settings(BaseSettings):
             file_secret_settings,
             TomlConfigSettingsSource(settings_cls),
         )
-
-
-settings = Settings()
 
 
 @lru_cache(maxsize=1)
