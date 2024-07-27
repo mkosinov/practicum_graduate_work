@@ -142,6 +142,7 @@ class MoviesApiInterface:
             get_settings().movies_api_films_advanced_search_url,
             json=search_query,
             headers={"Content-Type": "application/json"},
+            timeout=get_settings().timeouts.movies_api_response,
         )
         if response.status_code == HTTPStatus.OK:
             return FilmResponse.model_validate(response.json()[0])
@@ -156,6 +157,7 @@ class MoviesApiInterface:
             get_settings().movies_api_persons_advanced_search_url,
             json=search_query,
             headers={"Content-Type": "application/json"},
+            timeout=get_settings().timeouts.movies_api_response,
         )
         if response.status_code == HTTPStatus.OK:
             return PersonResponse.model_validate(response.json()[0])
@@ -164,7 +166,8 @@ class MoviesApiInterface:
 
     async def health_readiness(self) -> bool:
         response = httpx.get(
-            get_settings().movies_api_health_readiness_url, timeout=1
+            get_settings().movies_api_health_readiness_url,
+            timeout=get_settings().timeouts.movies_api_response,
         )
         if response.status_code == HTTPStatus.OK:
             return True

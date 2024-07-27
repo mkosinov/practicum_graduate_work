@@ -4,8 +4,10 @@ from functools import lru_cache, wraps
 from typing import Callable
 
 from fastapi import Depends
+from httpx import NetworkError, TimeoutException
 
 from assistant.alice import Alice
+from core.settings import get_settings
 from schema.alice import AliceRequest
 from service.reply_generator import ReplyGenerator, get_reply_generator
 from service.services_interactor import (
@@ -89,9 +91,9 @@ class DialogController:
                             .get(intent_id, {})
                             .get("slots", {})
                         ),
-                        timeout=2,
+                        timeout=get_settings().timeouts.generate_response,
                     )
-                except TimeoutError:
+                except (TimeoutError, TimeoutException, NetworkError):
                     reply, state = self.timeout()
         if not reply:
             reply, state = self.fallback()
