@@ -3,9 +3,12 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
+from core.settings import get_settings
+
 ##################
 # Alice Enums #
 ##################
+
 
 class CardType(StrEnum):
     BigImage = "BigImage"
@@ -23,6 +26,7 @@ class RequestType(StrEnum):
     AudioPlayerPlaybackFailed = "AudioPlayer.PlaybackFailed"
     PurchaseConfirmation = "Purchase.Confirmation"
     ShowPull = "Show.Pull"
+    HealthReadiness = "HealthReadiness"
 
 
 class EntityType(StrEnum):
@@ -35,6 +39,7 @@ class EntityType(StrEnum):
 ##################
 # Alice Request #
 ##################
+
 
 class State(BaseModel):
     session: Optional[dict] = None
@@ -136,11 +141,13 @@ class InnerResponse(BaseModel):
         None  # Обязательный параметр только для сценария утреннего шоу.
     )
 
-    @field_validator('text')
+    @field_validator("text")
     def validate_text_length(cls, text):
-        if len(text) > 300:
-            return text[0:300]
+        """Ограничение длины текста в ответе, для улучшения user experience."""
+        if len(text) > get_settings().reply_text_length_limit:
+            return text[0 : get_settings().reply_text_length_limit]
         return text
+
 
 class Analytics(BaseModel):
     events: list[dict] = []

@@ -1,8 +1,10 @@
 from datetime import date
+from http import HTTPStatus
 
 import httpx
-from core.settings import get_settings
 from pydantic import BaseModel, ConfigDict
+
+from core.settings import get_settings
 
 search_films_structure = {
     "movie": {
@@ -137,11 +139,12 @@ class MoviesApiInterface:
             slots, search_films_structure
         )
         response = httpx.post(
-            get_settings().movies_api_url + "/films/advanced_search",
+            get_settings().movies_api_films_advanced_search_url,
             json=search_query,
             headers={"Content-Type": "application/json"},
+            timeout=get_settings().timeouts.movies_api_response,
         )
-        if response.status_code == 200:
+        if response.status_code == HTTPStatus.OK:
             return FilmResponse.model_validate(response.json()[0])
         else:
             return None
@@ -151,15 +154,26 @@ class MoviesApiInterface:
             slots, search_persons_structure
         )
         response = httpx.post(
-            get_settings().movies_api_url + "/persons/advanced_search",
+            get_settings().movies_api_persons_advanced_search_url,
             json=search_query,
             headers={"Content-Type": "application/json"},
+            timeout=get_settings().timeouts.movies_api_response,
         )
-        if response.status_code == 200:
+        if response.status_code == HTTPStatus.OK:
             return PersonResponse.model_validate(response.json()[0])
         else:
             return None
 
+    async def health_readiness(self) -> bool:
+        response = httpx.get(
+            get_settings().movies_api_health_readiness_url,
+            timeout=get_settings().timeouts.movies_api_response,
+        )
+        if response.status_code == HTTPStatus.OK:
+            return True
+        else:
+            return False
 
-def get_movies_api_interface():
+
+def get_movies_api_interface() -> MoviesApiInterface:
     return MoviesApiInterface()

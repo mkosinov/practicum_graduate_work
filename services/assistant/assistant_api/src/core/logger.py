@@ -11,15 +11,15 @@ class Logger:
         if get_settings().debug:
             self.logger.setLevel(logging.DEBUG)
         else:
-            self.logger.setLevel(get_settings().logging_level)
+            self.logger.setLevel(get_settings().logger.logging_level)
         formatter = logging.Formatter(
             "[%(asctime)s] %(message)s", "%Y-%m-%d %H:%M:%S"
         )
         file_handler = logging.handlers.RotatingFileHandler(
-            get_settings().logs_dir.joinpath(f"{name}.log"),
+            get_settings().logger.logs_dir.joinpath(f"{name}.log"),
             mode="a",
-            maxBytes=1024 * 1024,
-            backupCount=5,
+            maxBytes=get_settings().logger.max_bytes,
+            backupCount=get_settings().logger.backup_count,
         )
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)

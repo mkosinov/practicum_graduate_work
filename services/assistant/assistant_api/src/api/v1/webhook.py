@@ -1,6 +1,6 @@
+from fastapi import APIRouter, BackgroundTasks, Body, Depends
+
 from assistant.alice import Alice, get_alice
-from core.logger import Logger, get_logger
-from fastapi import APIRouter, Body, Depends
 from schema.alice import AliceResponse
 from service.dialog_controller import DialogController, get_dialog_controller
 from service.dialog_keeper import DialogueKeeperService, get_dialogue_keeper
@@ -21,10 +21,10 @@ examples_list = list(examples.values())
     response_model=Alice.Response,
 )
 async def webhook_alice(
+    background_tasks: BackgroundTasks,
     alice_request: Alice.Request = Body(examples=examples_list),
     assistant: Alice = Depends(get_alice),
     dialogue_controller: DialogController = Depends(get_dialog_controller),
-    logger: Logger = Depends(get_logger),
     dialogue_keeper: DialogueKeeperService = Depends(get_dialogue_keeper),
 ) -> AliceResponse:
     text, state, kwargs = await dialogue_controller.process_request(
@@ -33,6 +33,6 @@ async def webhook_alice(
     response = assistant.create_response(
         request=alice_request, state=state, text=text, **kwargs
     )
-    await dialogue_keeper.save(alice_request, response)
+    background_tasks.add_task(dialogue_keeper.save, alice_request, response)
 
     return response
