@@ -5,6 +5,7 @@ from typing import Callable
 
 from fastapi import Depends
 from httpx import NetworkError, TimeoutException
+from opentelemetry import trace
 
 from assistant.alice import Alice
 from core.settings import get_settings
@@ -14,6 +15,8 @@ from service.services_interactor import (
     ServicesInteractor,
     get_service_interactor,
 )
+
+tracer = trace.get_tracer(__name__)
 
 
 def async_add_dialog_node_to_return(func):
@@ -55,49 +58,50 @@ class DialogController:
         }
 
     async def process_request(self, request: AliceRequest, assistant: Alice):
-        response = namedtuple(
-            "dialog_response", "text, state, kwargs", defaults=("", {}, {})
-        )
-        if assistant.is_new_session(request):
-            return response(
-                *self.hello(assistant.is_first_user_request(request))
+        with tracer.start_as_current_span("dialog_controller.process_request"):
+            response = namedtuple(
+                "dialog_response", "text, state, kwargs", defaults=("", {}, {})
             )
-        assistant_intents = assistant.get_intents(request).keys()
-        reply = ""
-        if "YANDEX.REPEAT" in assistant_intents:
-            return response(
-                *self.repeat_response(
-                    assistant.get_last_response(request),
-                    assistant.get_dialog_node_state(request),
+            if assistant.is_new_session(request):
+                return response(
+                    *self.hello(assistant.is_first_user_request(request))
                 )
-            )
-        elif "repeat_request" in assistant_intents:
-            return response(
-                *self.repeat_request(
-                    assistant.get_last_request(request),
-                    assistant.get_dialog_node_state(request),
-                )
-            )
-        elif "bye" in assistant_intents:
-            return response(*self.bye(), {"end_session": True})
-        elif "YANDEX.HELP" in assistant_intents:
-            return response(*self.help())
-        for intent_id in list(assistant_intents):
-            if intent_id in self.search_intents.keys():
-                try:
-                    reply, state = await asyncio.wait_for(
-                        self.search_intents.get(intent_id)(
-                            assistant.get_intents(request)
-                            .get(intent_id, {})
-                            .get("slots", {})
-                        ),
-                        timeout=get_settings().timeouts.generate_response,
+            assistant_intents = assistant.get_intents(request).keys()
+            reply = ""
+            if "YANDEX.REPEAT" in assistant_intents:
+                return response(
+                    *self.repeat_response(
+                        assistant.get_last_response(request),
+                        assistant.get_dialog_node_state(request),
                     )
-                except (TimeoutError, TimeoutException, NetworkError):
-                    reply, state = self.timeout()
-        if not reply:
-            reply, state = self.fallback()
-        return response(reply, state)
+                )
+            elif "repeat_request" in assistant_intents:
+                return response(
+                    *self.repeat_request(
+                        assistant.get_last_request(request),
+                        assistant.get_dialog_node_state(request),
+                    )
+                )
+            elif "bye" in assistant_intents:
+                return response(*self.bye(), {"end_session": True})
+            elif "YANDEX.HELP" in assistant_intents:
+                return response(*self.help())
+            for intent_id in list(assistant_intents):
+                if intent_id in self.search_intents.keys():
+                    try:
+                        reply, state = await asyncio.wait_for(
+                            self.search_intents.get(intent_id)(
+                                assistant.get_intents(request)
+                                .get(intent_id, {})
+                                .get("slots", {})
+                            ),
+                            timeout=get_settings().timeouts.generate_response,
+                        )
+                    except (TimeoutError, TimeoutException, NetworkError):
+                        reply, state = self.timeout()
+            if not reply:
+                reply, state = self.fallback()
+            return response(reply, state)
 
     @add_dialog_node_to_return
     def timeout(self) -> tuple[str, dict | None]:

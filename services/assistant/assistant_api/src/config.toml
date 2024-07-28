@@ -1,4 +1,5 @@
 debug = false
+
 movies_api_host = "movies.proxy"
 movies_api_port = "80"
 
@@ -10,3 +11,8 @@ mongo_dialogue_collection = "dialogueCollection"
 [timeouts]
 generate_response = 1.0
 movies_api_response = 0.5
+
+[tracing]
+tracing = true
+tracing_host = "assistant.jaeger"
+tracing_port = 6831
