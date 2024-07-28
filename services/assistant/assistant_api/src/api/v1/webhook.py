@@ -34,5 +34,4 @@ async def webhook_alice(
         request=alice_request, state=state, text=text, **kwargs
     )
     background_tasks.add_task(dialogue_keeper.save, alice_request, response)
-
     return response
