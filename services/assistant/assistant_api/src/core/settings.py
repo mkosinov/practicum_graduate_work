@@ -4,16 +4,12 @@ from pathlib import Path
 from typing import ClassVar, Tuple, Type
 
 from pydantic import Field
-from pydantic_settings import (
-    BaseSettings,
-    PydanticBaseSettingsSource,
-    SettingsConfigDict,
-    TomlConfigSettingsSource,
-)
+from pydantic_settings import (BaseSettings, PydanticBaseSettingsSource,
+                               SettingsConfigDict, TomlConfigSettingsSource)
 
 
 class Tracing(BaseSettings):
-    tracing: bool
+    tracing: bool = False
     tracing_host: str = ""
     tracing_port: int = 0
 
@@ -50,10 +46,6 @@ class Settings(BaseSettings):
     mongo_dsn_2: str = Field(default=...)
     mongo_db_name: str = Field(default=...)
     mongo_dialogue_collection: str = Field(default=...)
-
-    # movies
-    movies_api_host: str = "localhost"
-    movies_api_port: str = "8001"
 
     @property
     def _assistant_api_url(self) -> str:
