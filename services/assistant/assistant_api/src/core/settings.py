@@ -12,6 +12,13 @@ from pydantic_settings import (
 )
 
 
+class Logger(BaseSettings):
+    max_bytes: int
+    backup_count: int
+    logging_level: int = logging.INFO
+    logs_dir: Path = Path(__file__).parent.parent.joinpath("logs")
+
+
 class Timeouts(BaseSettings):
     movies_api_response: float
     generate_response: float
@@ -27,11 +34,10 @@ class Settings(BaseSettings):
     )
 
     debug: bool = False
-    logs_dir: Path = workdir.joinpath("logs")
-    logging_level: int = logging.INFO
 
     assistant_api_host: str = "localhost"
     assistant_api_port: str = "80"
+    reply_text_length_limit: int = 300  # рекомендуемая максимальная длина ответа (соответствует примерно 30 секундам речи)
 
     # mongo
     mongo_dsn_1: str = Field(default=...)
@@ -54,6 +60,8 @@ class Settings(BaseSettings):
     movies_api_health_readiness: str = "/films?page_number=1&page_size=1"
 
     timeouts: Timeouts
+
+    logger: Logger
 
     @property
     def _movies_api_url(self) -> str:
