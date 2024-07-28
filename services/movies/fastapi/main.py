@@ -6,12 +6,11 @@ from core.config import settings
 from core.logger import logger
 from db import elastic, redis
 from elasticsearch import AsyncElasticsearch
+from fastapi import FastAPI
+from fastapi.responses import ORJSONResponse
 from redis.asyncio import Redis
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
-
-from fastapi import FastAPI
-from fastapi.responses import ORJSONResponse
 
 
 @asynccontextmanager
@@ -22,12 +21,12 @@ async def lifespan(app: FastAPI):
     elastic.es = AsyncElasticsearch(
         hosts=[f"{settings.ELASTIC_HOST}:{settings.ELASTIC_PORT}"]
     )
-    logger.info("Приложение запущено")
+    logger.info("App started")
     yield
     # Логика при завершении приложения.
     await redis.redis.close()
     await elastic.es.close()
-    logger.info("Приложение остановлено")
+    logger.info("App exited")
 
 
 sentry_sdk.init(integrations=[StarletteIntegration(), FastApiIntegration()])
@@ -47,10 +46,3 @@ app.include_router(
 )
 app.include_router(persons.router, prefix="/api/v1/persons", tags=["Персоны"])
 app.include_router(genres.router, prefix="/api/v1/genres", tags=["Жанры"])
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(
-        "main:app", host="0.0.0.0", port=8001, log_level="debug", reload=True
-    )
