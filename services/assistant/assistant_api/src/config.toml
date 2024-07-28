@@ -14,6 +14,11 @@ mongo_dialogue_collection = "dialogueCollection"
 generate_response = 1.0
 movies_api_response = 0.5
 
+[tracing]
+tracing = true
+tracing_host = "assistant.jaeger"
+tracing_port = 6831
+
 [logger]
 logging_level = 20
 max_bytes = 1048576

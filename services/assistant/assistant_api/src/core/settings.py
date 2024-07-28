@@ -12,6 +12,12 @@ from pydantic_settings import (
 )
 
 
+class Tracing(BaseSettings):
+    tracing: bool
+    tracing_host: str = ""
+    tracing_port: int = 0
+
+
 class Logger(BaseSettings):
     max_bytes: int
     backup_count: int
@@ -60,6 +66,8 @@ class Settings(BaseSettings):
     movies_api_health_readiness: str = "/films?page_number=1&page_size=1"
 
     timeouts: Timeouts
+
+    tracing: Tracing
 
     logger: Logger
 
