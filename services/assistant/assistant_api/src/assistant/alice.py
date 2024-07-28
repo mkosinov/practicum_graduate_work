@@ -55,28 +55,25 @@ class Alice(AbstractAssistant):
     def get_dialog_node_state(self, request: Request) -> dict[str, Any]:
         if self.is_authenticated_user(request):
             return getattr(request.state.user, "dialog_node", {})
-        else:
-            return getattr(request.state.application, "dialog_node", {})
+        return getattr(request.state.application, "dialog_node", {})
 
     def get_last_request(self, request: Request) -> dict[str, Any]:
         if self.is_authenticated_user(request):
             return getattr(request.state, "user", {}).get(
                 "last_user_request", ""
             )
-        else:
-            return getattr(request.state, "application", {}).get(
-                "last_user_request", ""
-            )
+        return getattr(request.state, "application", {}).get(
+            "last_user_request", ""
+        )
 
     def get_last_response(self, request: Request) -> dict[str, Any]:
         if self.is_authenticated_user(request):
             return getattr(request.state, "user", {}).get(
                 "last_user_response", ""
             )
-        else:
-            return getattr(request.state, "application", {}).get(
-                "last_user_response", ""
-            )
+        return getattr(request.state, "application", {}).get(
+            "last_user_response", ""
+        )
 
     def is_new_session(self, request: Request) -> bool:
         """Return if session is new. Default is False."""
@@ -84,20 +81,18 @@ class Alice(AbstractAssistant):
 
     def is_authenticated_user(self, request: Request) -> bool:
         """Return True if user is authenticated."""
-        if hasattr(request, "session") and hasattr(request.session, "user"):
-            return True
-        return False
+        return hasattr(request, "session") and hasattr(request.session, "user")
 
     def is_first_user_request(self, request: Request) -> bool:
         """Check if user has state."""
-        if hasattr(request, "state"):
-            if (
+        return not (
+            hasattr(request, "state")
+            and (
                 request.state.session
                 or request.state.user
                 or request.state.application
-            ):
-                return False
-        return True
+            )
+        )
 
 
 @lru_cache()

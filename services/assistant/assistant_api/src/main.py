@@ -23,11 +23,6 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
-app.include_router(webhook.router)
-app.include_router(healthcheck.router)
-app.include_router(dialogs.router)
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="debug")
+app.include_router(webhook.router, tags=["Assistants webhooks"])
+app.include_router(healthcheck.router, tags=["Service healthchecks"])
+app.include_router(dialogs.router, tags=["Dialogs history"])
