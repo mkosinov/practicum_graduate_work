@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 
 from api.v1.webhook import webhook_alice
 from assistant.alice import Alice, get_alice
@@ -22,6 +22,7 @@ async def liveness():
 
 @router.get("/readiness")
 async def readiness(
+    background_tasks: BackgroundTasks,
     services_interactor: ServicesInteractor = Depends(get_service_interactor),
     assistant: Alice = Depends(get_alice),
     dialogue_controller: DialogController = Depends(get_dialog_controller),
@@ -32,7 +33,9 @@ async def readiness(
         "movies_api": False,
     }
     alice_response = await webhook_alice(
+        background_tasks=background_tasks,
         alice_request=AliceRequest(
+            background_tasks=background_tasks,
             request=Request(command="healthcheck", type="HealthReadiness"),
             version="1.0",
         ),

@@ -27,7 +27,7 @@ class Settings(BaseSettings):
         "кинопроизведения"
     )
     VERSION: str = "0.1.0"
-    OPEN_API_DOCS_URL: str = "/api/openapi"
+    OPEN_API_DOCS_URL: str = "/docs"
     OPENAPI_URL: str = "/api/openapi.json"
 
     # JWT

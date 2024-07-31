@@ -1,0 +1,164 @@
+name: auth
+
+services:
+  auth.db:
+    container_name: auth.postgres
+    image: postgres:16.0-alpine3.18
+    environment:
+      - POSTGRES_USER_FILE=/var/run/secrets/auth_postgres_user
+      - POSTGRES_PASSWORD_FILE=/var/run/secrets/auth_postgres_password
+      - POSTGRES_DB_FILE=/var/run/secrets/auth_postgres_db
+      - POSTGRES_HOST=auth.db
+      - PGPORT=9999
+    secrets:
+      - auth_postgres_user
+      - auth_postgres_password
+      - auth_postgres_db    
+    expose:
+      - 9999
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -h $$POSTGRES_HOST -p $$PGPORT -U `cat $$POSTGRES_USER_FILE` -d `cat $$POSTGRES_DB_FILE`
+      interval: 30s
+      timeout: 1s
+      retries: 5
+      start_period: 30s
+    restart: always
+    networks:
+      movies_project_net:
+
+  auth.cache:
+    container_name: auth.redis
+    image: redis:7.2.3-alpine3.19
+    environment:
+      - AUTH_REDIS_PORT=5379
+    expose:
+      -  5379
+    healthcheck:
+      test: redis-cli -p $$AUTH_REDIS_PORT ping
+      interval: 30s
+      timeout: 1s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - redis_auth_data:/data
+    restart: always
+    networks:
+      movies_project_net:
+    command: redis-server --port 5379 --save 60 1 --loglevel notice
+
+  auth.app:
+    container_name: auth.fastapi
+    build:
+      context: ./src
+    environment:
+      - OAUTH_BASE_URL="http://auth.proxy/api/v1/oauth"      
+      - AUTH_FASTAPI_HOST=auth.app
+      - AUTH_FASTAPI_PORT=8000
+      - AUTH_REDIS_HOST=auth.cache
+      - AUTH_REDIS_PORT=5379
+      - AUTH_POSTGRES_HOST=auth.db
+      - AUTH_POSTGRES_PORT=9999
+      - AUTH_ENABLE_TRACING=False      
+      - SUPERUSER_PASSWORD_FILE=/var/run/secrets/auth_superuser_password
+    secrets:
+      - auth_postgres_user
+      - auth_postgres_password
+      - auth_postgres_db
+      - auth_jwt_secret
+      - auth_oauth_yandex_client_id
+      - auth_oauth_yandex_client_secret
+      - auth_oauth_vk_client_id
+      - auth_oauth_vk_client_secret
+      - auth_superuser_password      
+    expose:
+      - 8000
+    volumes:
+      - fastapi_auth_log:/src/logs
+    healthcheck:
+      test: curl -s -f http://localhost:$$AUTH_FASTAPI_PORT/auth/docs || exit 1
+      interval: 30s
+      timeout: 1s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      auth.db:
+        condition: service_healthy
+      auth.cache:
+        condition: service_healthy
+    networks:
+      movies_project_net:
+    command: bash -c "poetry run alembic upgrade head; poetry run python superuser_cli.py `cat $$SUPERUSER_PASSWORD_FILE`; gunicorn -w 4 -k uvicorn.workers.UvicornWorker -b :8000 main:app"
+
+  auth.proxy:
+    container_name: auth.nginx
+    image: nginx:1.25.5-bookworm
+    ports:
+      - 80:80
+    volumes:
+      - nginx_auth_log:/var/log/nginx
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      auth.app:
+        condition: service_healthy
+    healthcheck:
+      test: service nginx status || exit 1
+      interval: 30s
+      timeout: 1s
+      retries: 5
+      start_period: 30s
+    restart: always
+    networks:
+      movies_project_net:
+
+  auth.tracing:
+    container_name: auth.jaeger
+    image: jaegertracing/all-in-one:latest
+    environment:
+      - jaeger_service_name=auth_service
+      - enable_tracing=True
+      - JAEGER_HOST=auth.tracing
+      - JAEGER_UI_PORT=16686
+      - JAEGER_PORT=6831
+    restart: always
+    ports:
+      - 16686:16686
+    expose:
+      - 6831
+    networks:
+      movies_project_net:
+    depends_on:
+      auth.app:
+        condition: service_healthy
+
+volumes:
+  postgres_auth_data:
+  redis_auth_data:
+  fastapi_auth_log:
+  nginx_auth_log:
+
+networks:
+  movies_project_net:
+
+secrets:
+  auth_postgres_user:
+    file: ../../../secrets/auth_postgres_user
+  auth_postgres_password:
+    file: ../../../secrets/auth_postgres_password
+  auth_postgres_db:
+    file: ../../../secrets/auth_postgres_db
+  auth_jwt_secret:
+    file: ../../../secrets/auth_jwt_secret
+  auth_oauth_yandex_client_id:
+    file: ../../../secrets/auth_oauth_yandex_client_id
+  auth_oauth_yandex_client_secret:
+    file: ../../../secrets/auth_oauth_yandex_client_secret
+  auth_oauth_vk_client_id:
+    file: ../../../secrets/auth_oauth_vk_client_id
+  auth_oauth_vk_client_secret:
+    file: ../../../secrets/auth_oauth_vk_client_secret
+  auth_superuser_password:
+    file: ../../../secrets/auth_superuser_password

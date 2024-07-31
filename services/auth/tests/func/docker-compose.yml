@@ -1,0 +1,135 @@
+name: auth_tests
+
+
+services:
+  auth.db.test:
+    container_name: auth.db.test
+    image: postgres:16.0-alpine3.18
+    environment:
+      - POSTGRES_USER_FILE=/var/run/secrets/auth_postgres_user
+      - POSTGRES_PASSWORD_FILE=/var/run/secrets/auth_postgres_password
+      - POSTGRES_DB_FILE=/var/run/secrets/auth_postgres_db
+      - POSTGRES_HOST=auth.db.test
+      - PGPORT=9999
+    secrets:
+      - auth_postgres_user
+      - auth_postgres_password
+      - auth_postgres_db
+    ports:
+      - 19999:9999
+    volumes:
+      - postgres_auth_data_tests:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -h $$POSTGRES_HOST -p $$PGPORT -U `cat $$POSTGRES_USER_FILE` -d `cat $$POSTGRES_DB_FILE`
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: always
+
+  auth.cache.test:
+    container_name: auth.cache.test
+    image: redis:7.2.3-alpine3.19
+    environment:
+      - AUTH_REDIS_PORT=5379
+    ports:
+      -  15379:5379
+    healthcheck:
+      test: redis-cli -p $$AUTH_REDIS_PORT ping
+      interval: 10s
+      timeout: 1s
+      retries: 3
+    volumes:
+      - redis_auth_data_tests:/data
+    restart: always
+    command: redis-server --port 5379 --save 60 1 --loglevel notice
+
+  auth.app.test:
+    container_name: auth.app.test
+    build:
+      context: ../../src
+    environment:
+      - OAUTH_BASE_URL="http://auth.proxy/api/v1/oauth"      
+      - AUTH_FASTAPI_HOST=auth.app.test
+      - AUTH_FASTAPI_PORT=8000
+      - AUTH_REDIS_HOST=auth.cache.test
+      - AUTH_REDIS_PORT=5379
+      - AUTH_POSTGRES_HOST=auth.db.test
+      - AUTH_POSTGRES_PORT=9999
+      - AUTH_ENABLE_TRACING=False
+    secrets:
+      - auth_postgres_user
+      - auth_postgres_password
+      - auth_postgres_db
+      - auth_jwt_secret
+      - auth_oauth_yandex_client_id
+      - auth_oauth_yandex_client_secret
+      - auth_oauth_vk_client_id
+      - auth_oauth_vk_client_secret
+      - auth_superuser_password
+    ports:
+      - 18000:8000
+    restart: "no"
+    healthcheck:
+      test: curl -s -f http://localhost:$$AUTH_FASTAPI_PORT/auth/docs || exit 1
+      interval: 30s
+      timeout: 1s
+      retries: 5
+      start_period: 30s    
+    depends_on:
+      auth.db.test:
+        condition: service_healthy
+      auth.cache.test:
+        condition: service_healthy
+    command: gunicorn -w 1 -k uvicorn.workers.UvicornWorker -b :8000 main:app
+
+  auth.tests:
+    container_name: auth.tests  
+    environment:
+      - AUTH_FASTAPI_HOST=auth.app.test
+      - AUTH_FASTAPI_PORT=8000
+      - AUTH_REDIS_HOST=auth.cache.test
+      - AUTH_REDIS_PORT=5379
+      - AUTH_POSTGRES_HOST=auth.db.test
+      - AUTH_POSTGRES_PORT=9999
+      - AUTH_ENABLE_TRACING=False
+    secrets:
+      - auth_postgres_user
+      - auth_postgres_password
+      - auth_postgres_db
+      - auth_jwt_secret
+      - auth_oauth_yandex_client_id
+      - auth_oauth_yandex_client_secret
+      - auth_oauth_vk_client_id
+      - auth_oauth_vk_client_secret
+      - auth_superuser_password      
+    build:
+      context: .
+    depends_on:
+      auth.app.test:
+        condition: service_started
+    command: poetry run pytest
+
+volumes:
+  postgres_auth_data_tests:
+  redis_auth_data_tests:
+
+secrets:
+  auth_postgres_user:
+    file: ../../../../../secrets/auth_postgres_user
+  auth_postgres_password:
+    file: ../../../../../secrets/auth_postgres_password
+  auth_postgres_db:
+    file: ../../../../../secrets/auth_postgres_db
+  auth_jwt_secret:
+    file: ../../../../../secrets/auth_jwt_secret
+  auth_oauth_yandex_client_id:
+    file: ../../../../../secrets/auth_oauth_yandex_client_id
+  auth_oauth_yandex_client_secret:
+    file: ../../../../../secrets/auth_oauth_yandex_client_secret
+  auth_oauth_vk_client_id:
+    file: ../../../../../secrets/auth_oauth_vk_client_id
+  auth_oauth_vk_client_secret:
+    file: ../../../../../secrets/auth_oauth_vk_client_secret
+  auth_superuser_password:
+    file: ../../../../../secrets/auth_superuser_password

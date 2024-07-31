@@ -1,0 +1,42 @@
+[tool.poetry]
+name = "auth-service"
+version = "0.1.0"
+description = ""
+authors = ["bbaranov, mkosinov"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+fastapi = "^0.103.2"
+uvicorn = "^0.22.0"
+asyncpg = "^0.28.0"
+sqlalchemy = "^2.0.29"
+pydantic-settings = "^2.0.3"
+gunicorn = "^21.2.0"
+python-jose = "^3.3.0"
+sqlalchemy-utils = "^0.41.2"
+pydantic = {extras = ["email"], version = "^2.5.3"}
+redis = "^5.0.3"
+argon2-cffi = "^23.1.0"
+pycryptodomex = "^3.20.0"
+python-multipart = "^0.0.8"
+alembic = "^1.12.0"
+typer = "^0.12.3"
+httpx = "^0.24.0"
+opentelemetry-sdk = "^1.0.0"
+opentelemetry-instrumentation-fastapi = "^0.39b0"
+opentelemetry-exporter-jaeger = "^1.21.0"
+orjson = "^3.8.14"
+eval-type-backport = { version = "^0.2.0", python = ">=3.8,<3.10"}
+sentry-sdk = "2.3.1"
+
+[tool.isort]
+sources = ["src"]
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.3.7"
+isort = { version = "^5.11.5", python = ">3.7" }
+pre-commit = { version = "^3.7.0", python = ">3.9"}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

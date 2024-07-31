@@ -1,0 +1,12 @@
+.DS_Store
+.git/
+.nogit/
+.gitignore
+.venv*
+.vscode/
+.env
+*.md
+__pycache__/
+.dockerignore
+.env.example
+.lock
